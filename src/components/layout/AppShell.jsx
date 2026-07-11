@@ -4,12 +4,12 @@ const navItems = [
   { id: 'client', label: 'Accueil client', meta: 'Vue mobile et client', badge: null },
   { id: 'form', label: 'Nouvelle livraison', meta: 'Demande et mode', badge: null },
   { id: 'tracking', label: 'Suivi livraison', meta: 'Colis #042', badge: 'live' },
-  { id: 'merchant', label: 'Tableau commercant', meta: 'Pilotage', badge: '4' },
+  { id: 'merchant', label: 'Tableau commerçant', meta: 'Pilotage', badge: '4' },
 ]
 
-function AppShell({ children, currentView, onNavigate }) {
+function AppShell({ children, currentView, selectedDeliveryId, onNavigate }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const activeView = currentView.startsWith('merchant') ? 'merchant' : currentView
+  const activeView = currentView === 'merchantTracking' ? 'tracking' : currentView.startsWith('merchant') ? 'merchant' : currentView
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#070C1A] text-slate-100">
@@ -43,7 +43,11 @@ function AppShell({ children, currentView, onNavigate }) {
           Principal
         </div>
         <nav className={`flex flex-1 flex-col gap-1 transition-opacity ${sidebarCollapsed ? 'pointer-events-none opacity-0' : 'opacity-100'}`}>
-          {navItems.map((item) => (
+          {navItems.map((item) => {
+            const isTracking = item.id === 'tracking'
+            const itemMeta = isTracking && (currentView === 'tracking' || currentView === 'merchantTracking') ? `Livraison #${selectedDeliveryId}` : item.meta
+
+            return (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
@@ -69,10 +73,11 @@ function AppShell({ children, currentView, onNavigate }) {
                 ) : null}
               </span>
               {!sidebarCollapsed ? (
-                <span className="mt-1 block text-xs text-slate-600 group-hover:text-slate-500">{item.meta}</span>
+                <span className="mt-1 block text-xs text-slate-600 group-hover:text-slate-500">{itemMeta}</span>
               ) : null}
             </button>
-          ))}
+            )
+          })}
         </nav>
 
         <div className={`pt-4 ${sidebarCollapsed ? 'border-t-0' : 'border-t border-white/10'}`}>

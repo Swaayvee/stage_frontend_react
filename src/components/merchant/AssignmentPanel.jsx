@@ -12,6 +12,7 @@ function AssignmentPanel({
   hasPrevious,
   hasNext,
   validated,
+  className = '',
 }) {
   if (!delivery) return null
 
@@ -27,21 +28,25 @@ function AssignmentPanel({
   const selectedOption = options.find((option) => option.id === selectedAssignee)
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm font-bold">Choisir la prise en charge pour {delivery.shortId}</div>
+    <div className={`rounded-xl border border-white/10 bg-white/[0.03] p-4 ${className}`}>
+      <div className="mb-5 flex flex-col gap-3 rounded-lg border border-white/10 bg-[#070C1A]/45 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Affectation en cours</div>
+          <div className="mt-1 text-sm font-bold">Livraison {delivery.shortId}</div>
+          <div className="mt-1 text-xs text-slate-500">{delivery.customer} · {delivery.address}</div>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={onPrevious}
             disabled={!hasPrevious}
-            className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-white/10 px-3 py-2 text-xs font-bold text-slate-300 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Précédent
           </button>
           <button
             onClick={onNext}
             disabled={!hasNext}
-            className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-white/10 px-3 py-2 text-xs font-bold text-slate-300 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Suivant
           </button>
@@ -54,7 +59,7 @@ function AssignmentPanel({
         </div>
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-2 gap-2">
+          <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-white/[0.04] p-1">
             {[
               { id: 'internal', title: 'Livreur interne' },
               { id: 'carrier', title: 'Transporteur tiers' },
@@ -62,18 +67,20 @@ function AssignmentPanel({
               <button
                 key={option.id}
                 onClick={() => onHandlingModeChange(option.id)}
-                className={`rounded-lg border px-3 py-2 text-left text-xs font-bold transition ${
+                className={`rounded-md border px-3 py-2.5 text-left text-xs font-bold transition ${
                   handlingMode === option.id
                     ? option.id === 'internal'
-                      ? 'border-[#34D399]/30 bg-[#34D399]/10 text-[#B8F8DB]'
-                      : 'border-[#A78BFA]/30 bg-[#A78BFA]/10 text-[#E7DCFF]'
-                    : 'border-white/10 text-slate-400 hover:bg-white/[0.05]'
+                      ? 'border-[#34D399]/35 bg-[#34D399]/12 text-[#B8F8DB]'
+                      : 'border-[#A78BFA]/35 bg-[#A78BFA]/12 text-[#E7DCFF]'
+                    : 'border-transparent text-slate-400 hover:bg-white/[0.05]'
                 }`}
               >
                 {option.title}
               </button>
             ))}
           </div>
+
+          <p className="mb-3 text-[11px] text-slate-500">Sélectionnez l’intervenant qui prendra cette livraison en charge.</p>
 
           <div className="grid gap-2">
             {options.length === 0 ? (
@@ -85,19 +92,20 @@ function AssignmentPanel({
                 <button
                   key={option.id}
                   onClick={() => onAssigneeChange(option.id)}
-                  className={`grid grid-cols-[1fr_auto] gap-3 rounded-lg border px-4 py-3 text-left ${
+                  className={`group grid grid-cols-[1fr_auto] gap-3 rounded-lg border px-4 py-3 text-left transition ${
                     selectedAssignee === option.id
                       ? handlingMode === 'internal'
-                        ? 'border-[#34D399]/30 bg-[#34D399]/10'
-                        : 'border-[#A78BFA]/30 bg-[#A78BFA]/10'
-                      : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'
+                        ? 'border-[#34D399]/40 bg-[#34D399]/12 shadow-[0_8px_22px_rgba(52,211,153,0.08)]'
+                        : 'border-[#A78BFA]/40 bg-[#A78BFA]/12 shadow-[0_8px_22px_rgba(167,139,250,0.08)]'
+                      : 'border-dashed border-white/15 bg-white/[0.02] hover:border-[#6C8EFF]/35 hover:bg-[#6C8EFF]/[0.06]'
                   }`}
-                >
+                  >
                   <span>
                     <span className="block text-sm font-bold">{resolveName(option)}</span>
                     <span className="block text-xs text-slate-500">
                       {handlingMode === 'internal' ? 'Équipe interne' : 'Prestataire externe'}
                     </span>
+                    {selectedAssignee !== option.id ? <span className="mt-1 block text-[10px] font-bold text-slate-600 group-hover:text-[#8BA8FF]">Sélectionner</span> : null}
                   </span>
                   <span className="text-right">
                     <span className="block text-xs font-bold text-[#8BA8FF]">{formatDistance(option.distanceKm)}</span>

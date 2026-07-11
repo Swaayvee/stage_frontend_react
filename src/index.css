@@ -27,6 +27,23 @@ select {
   font: inherit;
 }
 
+select {
+  color-scheme: dark;
+}
+
+select option {
+  color: #e2e8f0;
+  background: #0b1020;
+}
+
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 button {
   cursor: pointer;
 }
@@ -159,62 +176,3 @@ button:disabled {
     animation: none;
   }
 }
-
-.timeline-item {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 1rem;
-}
-
-.timeline-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.timeline-bubble {
-  display: grid;
-  height: 32px;
-  width: 32px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 9999px;
-  border-width: 2px;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.timeline-bubble-done {
-  border-color: #34D399;
-  background: rgba(52, 211, 153, 0.15);
-  color: #34D399;
-}
-
-.timeline-bubble-active {
-  border-color: #6C8EFF;
-  background: rgba(108, 142, 255, 0.15);
-  color: #8BA8FF;
-}
-
-.timeline-bubble-pending {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: #64748b;
-}
-
-.timeline-connector {
-  width: 2px;
-  flex: 1;
-  min-height: 1.5rem;
-  margin: 4px 0;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.timeline-content {
-  padding-bottom: 1.5rem;
-}
-
-.timeline-item:last-child .timeline-content {
-  padding-bottom: 0;
-}
-

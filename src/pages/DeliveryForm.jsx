@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Card from '../components/ui/Card'
+import Tag from '../components/ui/Tag'
 import { deliveryModes, relayPoints } from '../data/deliveries'
 
 function Field({ label, children }) {
@@ -44,8 +45,8 @@ function DeliveryForm({ onNavigate }) {
   const selectedRelay = relayPoints.find((point) => point.id === relay)
   const recipient = [formData.firstName, formData.lastName].filter(Boolean).join(' ')
   const destination = [formData.city, formData.postalCode].filter(Boolean).join(', ')
-  const customRelayStatus = formData.customRelayAddress.length > 8 ? 'Adresse prete a verifier' : 'Adresse a completer'
-  const modeDetail = mode === 'relay' ? (relayChoice === 'custom' ? formData.customRelayAddress || customRelayStatus : selectedRelay?.name) : 'Livraison a domicile'
+  const customRelayStatus = formData.customRelayAddress.length > 8 ? 'Adresse prête à vérifier' : 'Adresse à compléter'
+  const modeDetail = mode === 'relay' ? (relayChoice === 'custom' ? formData.customRelayAddress || customRelayStatus : selectedRelay?.name) : 'Livraison à domicile'
 
   const updateField = (field) => (event) => {
     setFormData((current) => ({
@@ -58,14 +59,14 @@ function DeliveryForm({ onNavigate }) {
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6C8EFF]">Nouvelle demande</p>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Creer une livraison</h1>
-        <p className="mt-2 text-sm text-slate-400">Renseignez les informations de colis et choisissez le mode adapte.</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Créer une livraison</h1>
+        <p className="mt-2 text-sm text-slate-400">Renseignez les informations du colis et choisissez le mode adapté.</p>
 
         <div className="mt-8 grid gap-5">
           <Card className="p-6">
             <h2 className="mb-5 text-sm font-bold">Informations du colis</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Reference commande">
+              <Field label="Référence de commande">
                 <input
                   className={inputClasses()}
                   value={formData.orderReference}
@@ -73,7 +74,7 @@ function DeliveryForm({ onNavigate }) {
                   placeholder="ex. CMD-2025-042"
                 />
               </Field>
-              <Field label="Poids estime">
+              <Field label="Poids estimé">
                 <input className={inputClasses()} value={formData.weight} onChange={updateField('weight')} placeholder="ex. 2.5 kg" />
               </Field>
               <Field label="Description">
@@ -81,13 +82,13 @@ function DeliveryForm({ onNavigate }) {
                   className={`${inputClasses()} min-h-24 sm:col-span-2`}
                   value={formData.description}
                   onChange={updateField('description')}
-                  placeholder="Vetements, electronique..."
+                  placeholder="Vêtements, électronique..."
                 />
               </Field>
               <Field label="Dimensions">
                 <input className={inputClasses()} value={formData.dimensions} onChange={updateField('dimensions')} placeholder="L x l x H" />
               </Field>
-              <Field label="Valeur declaree">
+              <Field label="Valeur déclarée">
                 <input
                   className={inputClasses()}
                   value={formData.declaredValue}
@@ -101,7 +102,7 @@ function DeliveryForm({ onNavigate }) {
           <Card className="p-6">
             <h2 className="mb-5 text-sm font-bold">Destinataire et adresse</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Prenom">
+              <Field label="Prénom">
                 <input className={inputClasses()} value={formData.firstName} onChange={updateField('firstName')} placeholder="Marie" />
               </Field>
               <Field label="Nom">
@@ -116,7 +117,7 @@ function DeliveryForm({ onNavigate }) {
                   type="email"
                 />
               </Field>
-              <Field label="Telephone">
+              <Field label="Téléphone">
                 <input className={inputClasses()} value={formData.phone} onChange={updateField('phone')} placeholder="+33 6 00 00 00 00" />
               </Field>
               <Field label="Adresse">
@@ -165,7 +166,7 @@ function DeliveryForm({ onNavigate }) {
                         relayChoice === 'known' ? 'bg-[#34D399]/15 text-[#34D399]' : 'bg-white/[0.04] text-slate-400'
                       }`}
                     >
-                      Relais recommandes
+                      Relais recommandés
                     </button>
                     <button
                       onClick={() => setRelayChoice('custom')}
@@ -189,12 +190,8 @@ function DeliveryForm({ onNavigate }) {
                           <span>
                             <span className="flex flex-wrap items-center gap-2">
                               <span className="text-sm font-bold">{point.name}</span>
-                              <span className="rounded-full bg-[#6C8EFF]/15 px-2 py-0.5 text-[10px] font-bold text-[#8BA8FF]">
-                                {point.hint}
-                              </span>
-                              <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold text-slate-400">
-                                {point.distance}
-                              </span>
+                              <Tag tone="blue">{point.hint}</Tag>
+                              <Tag>{point.distance}</Tag>
                             </span>
                             <span className="mt-1 block text-xs text-slate-500">{point.address}</span>
                             <span className="block text-xs text-[#34D399]">{point.availability}</span>
@@ -210,7 +207,7 @@ function DeliveryForm({ onNavigate }) {
                           className={inputClasses()}
                           value={formData.customRelayAddress}
                           onChange={updateField('customRelayAddress')}
-                          placeholder="Nom ou adresse du relais souhaite"
+                          placeholder="Nom ou adresse du relais souhaité"
                         />
                       </Field>
                       <div
@@ -220,7 +217,7 @@ function DeliveryForm({ onNavigate }) {
                             : 'border-[#F59E0B]/25 bg-[#F59E0B]/10 text-[#F59E0B]'
                         }`}
                       >
-                        {customRelayStatus} - verification effectuee par le systeme avant validation.
+                        {customRelayStatus} — vérification effectuée par le système avant validation.
                       </div>
                     </div>
                   )}
@@ -230,21 +227,21 @@ function DeliveryForm({ onNavigate }) {
 
             {mode === 'home' ? (
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <Field label="Date souhaitee">
+                <Field label="Date souhaitée">
                   <input className={inputClasses()} value={formData.deliveryDate} onChange={updateField('deliveryDate')} type="date" />
                 </Field>
-                <Field label="Creneau">
-                  <select className={inputClasses()} value={formData.timeSlot} onChange={updateField('timeSlot')}>
+                <Field label="Créneau">
+                  <select className={`${inputClasses()} appearance-none`} value={formData.timeSlot} onChange={updateField('timeSlot')}>
                     <option>Matin (8h - 12h)</option>
-                    <option>Apres-midi (13h - 17h)</option>
-                    <option>Soiree (17h - 20h)</option>
+                    <option>Après-midi (13h - 17h)</option>
+                    <option>Soirée (17h - 20h)</option>
                   </select>
                 </Field>
               </div>
             ) : (
               <div className="mt-5 rounded-lg border border-[#34D399]/20 bg-[#34D399]/10 px-4 py-3 text-sm leading-6 text-[#B8F8DB]">
-                Pour un point relais, le client sera notifie lorsque le colis sera disponible au retrait. La date et le
-                creneau sont determines par la prise en charge du commercant.
+                Pour un point relais, le client sera notifié lorsque le colis sera disponible au retrait. La date et le
+                créneau sont déterminés par la prise en charge du commerçant.
               </div>
             )}
           </Card>
@@ -263,23 +260,23 @@ function DeliveryForm({ onNavigate }) {
       <aside className="lg:pt-24">
         <Card className="sticky top-24 overflow-hidden">
           <div className="border-b border-white/10 bg-[#6C8EFF]/10 p-5">
-            <h2 className="font-bold">Recapitulatif</h2>
+            <h2 className="font-bold">Récapitulatif</h2>
             <p className="mt-1 text-sm text-slate-500">Votre demande de livraison</p>
           </div>
           <div className="divide-y divide-white/10 p-5">
             {[
-              ['Commande', formData.orderReference || 'A renseigner'],
-              ['Destinataire', recipient || 'A renseigner'],
-              ['Destination', destination || formData.address || 'A renseigner'],
+              ['Commande', formData.orderReference || 'À renseigner'],
+              ['Destinataire', recipient || 'À renseigner'],
+              ['Destination', destination || formData.address || 'À renseigner'],
               ['Mode', selectedMode.label],
               ['Option', modeDetail],
               ...(mode === 'home'
                 ? [
-                    ['Date', formData.deliveryDate || 'A choisir'],
-                    ['Creneau', formData.timeSlot],
+                    ['Date', formData.deliveryDate || 'À choisir'],
+                    ['Créneau', formData.timeSlot],
                   ]
-                : [['Disponibilite', 'Notification a l arrivee au relais']]),
-              ['Delai estime', selectedMode.delay],
+                : [['Disponibilité', "Notification à l’arrivée au relais"]]),
+              ['Délai estimé', selectedMode.delay],
               ['Total', selectedMode.price],
             ].map(([key, value]) => (
               <div key={key} className="flex justify-between gap-5 py-3 text-sm">

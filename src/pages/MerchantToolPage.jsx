@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import Card, { CardHeader } from '../components/ui/Card'
 import StatusPill from '../components/ui/StatusPill'
+import MerchantBadge from '../components/merchant/MerchantBadge'
+import AssignmentPanel from '../components/merchant/AssignmentPanel'
+import Tag from '../components/ui/Tag'
 import {
-  carriers,
   deliveries,
   formatDistance,
   formatMerchantMode,
-  internalCouriers,
   merchantActivity,
   recentDeliveries,
   relayPoints,
@@ -98,6 +99,7 @@ function DeliveriesPage({ onNavigate }) {
                 <td className="px-5 py-4">
                   <div className="font-bold">{delivery.customer}</div>
                   <div className="mt-1 text-xs text-slate-500">{delivery.address}</div>
+                  <div className="mt-2"><MerchantBadge merchantId={delivery.merchantId} size="sm" /></div>
                 </td>
                 <td className="px-5 py-4">
                   <div className="text-slate-300">{delivery.destinationLabel}</div>
@@ -133,11 +135,11 @@ function StatsPage() {
         <div className="flex h-72 items-end gap-3 p-6">
           {weeklyStats.map((stat) => (
             <div key={stat.day} className="flex flex-1 flex-col items-center gap-3">
-              <div className="flex h-48 w-full items-end gap-1">
-                <div className="flex-1 rounded-t bg-gradient-to-t from-[#6C8EFF]/25 to-[#6C8EFF]" style={{ height: stat.internal * 1.45 }} />
-                <div className="flex-1 rounded-t bg-gradient-to-t from-[#A78BFA]/25 to-[#A78BFA]" style={{ height: stat.external * 1.45 }} />
+              <div className="flex h-48 w-full items-end gap-1" title={`${stat.internal} internes · ${stat.external} transporteurs`}>
+                <div className="flex-1 rounded-t bg-gradient-to-t from-[#6C8EFF]/25 to-[#6C8EFF]" style={{ height: `${stat.internal * 15}px` }} />
+                <div className="flex-1 rounded-t bg-gradient-to-t from-[#A78BFA]/25 to-[#A78BFA]" style={{ height: `${stat.external * 15}px` }} />
               </div>
-              <span className="text-xs font-bold text-slate-500">{stat.day}</span>
+              <span className="text-xs font-bold text-slate-500">{stat.day} · {stat.internal + stat.external}</span>
             </div>
           ))}
         </div>
@@ -177,23 +179,23 @@ function AssignPage({ onNavigate }) {
   const [selectedId, setSelectedId] = useState(pendingDeliveries[0]?.id ?? null)
   const [handlingMode, setHandlingMode] = useState('carrier')
   const [selectedAssignee, setSelectedAssignee] = useState(null)
+  const [validatedAssignments, setValidatedAssignments] = useState([])
 
   const selected = deliveries.find((delivery) => delivery.id === selectedId)
-  const options =
-    selected && handlingMode === 'internal'
-      ? selected.assignmentOptions.internal
-      : selected?.assignmentOptions.carrier ?? []
+  const selectedIndex = pendingDeliveries.findIndex((delivery) => delivery.id === selectedId)
 
-  const resolveName = (option) => {
-    const courier = internalCouriers.find((item) => item.id === option.id)
-    if (courier) return courier.name
-    return carriers.find((item) => item.id === option.id)?.name ?? option.id
+  const selectAt = (index) => {
+    const delivery = pendingDeliveries[index]
+    if (!delivery) return
+    setSelectedId(delivery.id)
+    setSelectedAssignee(null)
+    setHandlingMode(delivery.distanceKm > 50 ? 'carrier' : 'internal')
   }
 
   if (pendingDeliveries.length === 0) {
     return (
       <Card className="p-6">
-        <div className="text-sm text-slate-400">Aucune livraison en attente d affectation.</div>
+        <div className="text-sm text-slate-400">Aucune livraison en attente d’affectation.</div>
         <button onClick={() => onNavigate('merchantDeliveries')} className="mt-4 text-sm font-bold text-[#8BA8FF]">
           Voir toutes les livraisons
         </button>
@@ -250,54 +252,22 @@ function AssignPage({ onNavigate }) {
               </div>
             </div>
 
-            <div>
-              <div className="mb-3 grid grid-cols-2 gap-2">
-                {[
-                  { id: 'internal', title: 'Livreur interne', tone: 'border-[#34D399]/30 bg-[#34D399]/10' },
-                  { id: 'carrier', title: 'Transporteur tiers', tone: 'border-[#A78BFA]/30 bg-[#A78BFA]/10' },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => {
-                      setHandlingMode(option.id)
-                      setSelectedAssignee(null)
-                    }}
-                    className={`rounded-lg border px-3 py-3 text-xs font-bold transition ${
-                      handlingMode === option.id ? option.tone : 'border-white/10 text-slate-400 hover:bg-white/[0.05]'
-                    }`}
-                  >
-                    {option.title}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid gap-2">
-                {options.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setSelectedAssignee(option.id)}
-                    className={`grid grid-cols-[1fr_auto] gap-3 rounded-lg border px-4 py-3 text-left ${
-                      selectedAssignee === option.id
-                        ? handlingMode === 'internal'
-                          ? 'border-[#34D399]/30 bg-[#34D399]/10'
-                          : 'border-[#A78BFA]/30 bg-[#A78BFA]/10'
-                        : 'border-white/10 hover:bg-white/[0.05]'
-                    }`}
-                  >
-                    <span>
-                      <span className="block text-sm font-bold">{resolveName(option)}</span>
-                      <span className="block text-xs text-slate-500">
-                        {handlingMode === 'internal' ? 'Livreur interne' : 'Transporteur tiers'}
-                      </span>
-                    </span>
-                    <span className="text-right">
-                      <span className="block text-xs font-bold text-[#8BA8FF]">{formatDistance(option.distanceKm)}</span>
-                      <span className="block text-[10px] text-slate-500">{option.eta}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <AssignmentPanel
+              delivery={selected}
+              handlingMode={handlingMode}
+              selectedAssignee={selectedAssignee}
+              onHandlingModeChange={(mode) => {
+                setHandlingMode(mode)
+                setSelectedAssignee(null)
+              }}
+              onAssigneeChange={setSelectedAssignee}
+              onPrevious={() => selectAt(selectedIndex - 1)}
+              onNext={() => selectAt(selectedIndex + 1)}
+              hasPrevious={selectedIndex > 0}
+              hasNext={selectedIndex < pendingDeliveries.length - 1}
+              onValidate={() => setValidatedAssignments((current) => [...current, selectedId])}
+              validated={validatedAssignments.includes(selectedId)}
+            />
           </div>
         </Card>
       ) : null}
@@ -322,10 +292,10 @@ function RelaysPage() {
                 <div className="font-bold">{point.name}</div>
                 <div className="mt-2 text-sm leading-5 text-slate-500">{point.address}</div>
                 <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
-                  <span className="rounded-full bg-[#34D399]/15 px-2 py-1 text-[#34D399]">{formatDistance(point.distanceKm)} du commerce</span>
-                  <span className="rounded-full bg-white/10 px-2 py-1 text-slate-400">
+                  <Tag tone="green">{formatDistance(point.distanceKm)} du commerce</Tag>
+                  <Tag>
                     {linked.map((d) => d.shortId).join(', ')}
-                  </span>
+                  </Tag>
                 </div>
               </div>
             )
@@ -341,8 +311,8 @@ function RelaysPage() {
               <div className="font-bold">{point.name}</div>
               <div className="mt-2 text-sm leading-5 text-slate-500">{point.address}</div>
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
-                <span className="rounded-full bg-[#6C8EFF]/15 px-2 py-1 text-[#8BA8FF]">{point.hint}</span>
-                <span className="rounded-full bg-[#34D399]/15 px-2 py-1 text-[#34D399]">{formatDistance(point.distanceKm)}</span>
+                <Tag tone="blue">{point.hint}</Tag>
+                <Tag tone="green">{formatDistance(point.distanceKm)}</Tag>
               </div>
             </div>
           ))}

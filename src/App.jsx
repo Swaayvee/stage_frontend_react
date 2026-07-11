@@ -35,7 +35,7 @@ function App() {
   const perspective = view === 'merchantTracking' ? 'merchant' : view === 'tracking' ? 'client' : null
 
   return (
-    <AppShell currentView={view} onNavigate={navigate}>
+    <AppShell currentView={view} selectedDeliveryId={selectedDeliveryId} onNavigate={navigate}>
       <CurrentView
         onNavigate={navigate}
         view={view}

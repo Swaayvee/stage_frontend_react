@@ -1,11 +1,19 @@
-export const merchantAddress = '15 Rue de la Republique, 69002 Lyon'
+export const merchantAddress = '15 Rue de la République, 69002 Lyon'
+
+export const merchants = [
+  { id: 'mon-commerce', name: 'Mon Commerce', initial: 'MC', color: '#6C8EFF' },
+]
+
+export function getMerchant(merchantId) {
+  return merchants.find((merchant) => merchant.id === merchantId)
+}
 
 export const deliveryModes = {
   home: {
     id: 'home',
-    name: 'A domicile',
-    label: 'A domicile - Interne',
-    description: 'Remise directe a votre adresse par un livreur interne.',
+    name: 'À domicile',
+    label: 'À domicile - Interne',
+    description: 'Remise directe à votre adresse par un livreur interne.',
     delay: 'Sous 24h',
     price: '4,90 EUR',
     tone: 'blue',
@@ -24,7 +32,7 @@ export const deliveryModes = {
     name: 'Transporteur tiers',
     label: 'Transporteur tiers',
     description: 'Prestataire externe pour les livraisons longues distances.',
-    delay: 'J+1 a J+2',
+    delay: 'J+1 à J+2',
     price: '8,90 EUR',
     tone: 'purple',
   },
@@ -75,43 +83,43 @@ export const internalCouriers = [
 const baseTrackingSteps = [
   {
     id: 'created',
-    title: 'Demande creee',
-    description: 'Le mode de livraison a ete transmis au commercant.',
+    title: 'Demande créée',
+    description: 'Le mode de livraison a été transmis au commerçant.',
     time: "Aujourd'hui - 09:00",
     status: 'done',
   },
   {
     id: 'validated',
-    title: 'Demande validee',
-    description: 'Le commercant a confirme la commande et lance la preparation.',
+    title: 'Demande validée',
+    description: 'Le commerçant a confirmé la commande et lancé la préparation.',
     time: "Aujourd'hui - 09:15",
     status: 'done',
   },
   {
     id: 'assigned',
-    title: 'Livreur affecte',
-    description: 'Lucas D. a recupere le colis aupres du commercant.',
+    title: 'Livreur affecté',
+    description: 'Lucas D. a récupéré le colis auprès du commerçant.',
     time: "Aujourd'hui - 10:30",
     status: 'done',
   },
   {
     id: 'notified',
     title: 'Notification envoyee',
-    description: 'Le client a ete informe par email et SMS.',
+    description: 'Le client a été informé par e-mail et SMS.',
     time: "Aujourd'hui - 10:32",
     status: 'done',
   },
   {
     id: 'transit',
     title: 'En cours de livraison',
-    description: 'Le livreur est en route vers l adresse de livraison.',
+    description: 'Le livreur est en route vers l’adresse de livraison.',
     time: "Aujourd'hui - 12:22",
     status: 'active',
   },
   {
     id: 'received',
-    title: 'Confirmation de reception',
-    description: 'Le client confirmera la reception apres remise du colis.',
+    title: 'Confirmation de réception',
+    description: 'Le client confirmera la réception après remise du colis.',
     time: 'Estime - 14h30',
     status: 'pending',
   },
@@ -131,6 +139,7 @@ export const deliveries = [
     order: 'CMD-2025-042',
     customer: 'Marie Dupont',
     merchant: 'Mon Commerce',
+    merchantId: 'mon-commerce',
     merchantAddress,
     address: '12 Rue des Fleurs, 69001 Lyon',
     city: 'Lyon',
@@ -178,6 +187,7 @@ export const deliveries = [
     order: 'CMD-2025-041',
     customer: 'Jean Martin',
     merchant: 'Mon Commerce',
+    merchantId: 'mon-commerce',
     merchantAddress,
     address: 'Point relais - Carrefour City Bron',
     relayId: 'bron',
@@ -237,6 +247,7 @@ export const deliveries = [
     order: 'CMD-2025-040',
     customer: 'Sophie Bernard',
     merchant: 'Mon Commerce',
+    merchantId: 'mon-commerce',
     merchantAddress,
     address: '45 Avenue Gambetta, 75020 Paris',
     city: 'Paris',
@@ -303,6 +314,7 @@ export const deliveries = [
     order: 'CMD-2025-039',
     customer: 'Thomas Roux',
     merchant: 'Mon Commerce',
+    merchantId: 'mon-commerce',
     merchantAddress,
     address: '8 Bd Victor Hugo, 06000 Nice',
     city: 'Nice',
@@ -359,6 +371,7 @@ export const deliveries = [
     order: 'CMD-2025-038',
     customer: 'Claire Morel',
     merchant: 'Mon Commerce',
+    merchantId: 'mon-commerce',
     merchantAddress,
     address: '3 Rue de la Paix, 33000 Bordeaux',
     city: 'Bordeaux',
@@ -417,6 +430,7 @@ export const deliveries = [
     order: 'CMD-2025-034',
     customer: 'Amine Petit',
     merchant: 'Mon Commerce',
+    merchantId: 'mon-commerce',
     merchantAddress,
     address: '19 Rue Massena, 06000 Nice',
     city: 'Nice',
@@ -474,13 +488,13 @@ export const trackingSteps = currentDelivery.trackingSteps
 export const recentDeliveries = deliveries
 
 export const weeklyStats = [
-  { day: 'Lun', internal: 60, external: 40 },
-  { day: 'Mar', internal: 90, external: 55 },
-  { day: 'Mer', internal: 70, external: 80 },
-  { day: 'Jeu', internal: 110, external: 60 },
-  { day: 'Ven', internal: 85, external: 45 },
-  { day: 'Sam', internal: 50, external: 30 },
-  { day: 'Dim', internal: 30, external: 20 },
+  { day: 'Lun', internal: 8, external: 3 },
+  { day: 'Mar', internal: 11, external: 4 },
+  { day: 'Mer', internal: 7, external: 6 },
+  { day: 'Jeu', internal: 12, external: 5 },
+  { day: 'Ven', internal: 10, external: 4 },
+  { day: 'Sam', internal: 5, external: 2 },
+  { day: 'Dim', internal: 3, external: 1 },
 ]
 
 export const merchantActivity = [

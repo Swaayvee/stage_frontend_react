@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
 import Card, { CardHeader } from '../components/ui/Card'
 import ProgressSteps from '../components/delivery/ProgressSteps'
+import DeliveryTimeline from '../components/delivery/DeliveryTimeline'
 import StatusPill from '../components/ui/StatusPill'
+import MerchantBadge from '../components/merchant/MerchantBadge'
 import { deliveries, formatDistance } from '../data/deliveries'
 
 const stepCopy = {
-  created: 'Creee',
-  validated: 'Validee',
-  assigned: 'Affectee',
-  notified: 'Notifiee',
+  created: 'Créée',
+  validated: 'Validée',
+  assigned: 'Affectée',
+  notified: 'Notifiée',
   transit: 'Transit',
   received: 'Livree',
 }
@@ -79,7 +81,7 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
         ['Distance', formatDistance(currentDelivery.distanceKm)],
         ['Intervenant', `${currentDelivery.courier.shortName} - ${currentDelivery.courier.rating}`],
         ['Commercant', currentDelivery.merchant],
-        ['Delai', currentDelivery.eta],
+        ['Délai', currentDelivery.eta],
       ]
     : [
         ['Colis', currentDelivery.fullId],
@@ -87,7 +89,7 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
         ['Destination', currentDelivery.address],
         ['Intervenant', `${currentDelivery.courier.shortName} - ${currentDelivery.courier.rating}`],
         ['Commercant', currentDelivery.merchant],
-        ['Delai', currentDelivery.eta],
+        ['Délai', currentDelivery.eta],
       ]
 
   return (
@@ -95,19 +97,22 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
       <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_340px] lg:items-end">
         <div>
           <StatusPill tone={currentDelivery.tone}>
-            {currentDelivery.statusLabel} - Mise a jour {currentDelivery.updatedAt}
+            {currentDelivery.statusLabel} — Mise à jour {currentDelivery.updatedAt}
           </StatusPill>
           <h1 className="mt-4 text-3xl font-extrabold tracking-tight">
-            {isMerchant ? 'Suivi commercant' : 'Suivi de livraison'}
+            {isMerchant ? 'Suivi commerçant' : 'Suivi de livraison'}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
             Livraison {currentDelivery.fullId} - Commande {currentDelivery.order}
           </p>
+          <div className="mt-3">
+            <MerchantBadge merchantId={currentDelivery.merchantId} />
+          </div>
         </div>
 
         <Card className="p-3">
           <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
-            Livraison a suivre
+            Livraison à suivre
           </label>
           <div className="mb-3 grid grid-cols-3 gap-1 rounded-lg bg-white/[0.035] p-1">
             {[
@@ -152,7 +157,7 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
       </div>
 
       <div className="mb-6 rounded-lg border border-[#34D399]/20 bg-[#34D399]/10 px-5 py-4 text-sm text-[#9AF0C8]">
-        Notification active - le systeme vous informe par email et SMS a chaque changement de statut.
+        Notification active — le système vous informe par e-mail et SMS à chaque changement de statut.
       </div>
 
       <ProgressSteps steps={compactProgressSteps(currentDelivery)} />
@@ -179,8 +184,8 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-400">
                 {isMerchant
-                  ? 'Vue operationnelle pour le commercant : type de livraison, prise en charge et contenu du colis.'
-                  : 'Le suivi affiche l etat reel de cette livraison. Changez de colis dans le selecteur pour consulter son parcours.'}
+                  ? 'Vue opérationnelle pour le commerçant : type de livraison, prise en charge et contenu du colis.'
+                  : 'Le suivi affiche l’état réel de cette livraison. Changez de colis dans le sélecteur pour consulter son parcours.'}
               </p>
             </div>
           </Card>
@@ -195,29 +200,7 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
           <Card>
             <CardHeader title="Historique de la livraison" />
             <div className="p-5">
-              {currentDelivery.trackingSteps.map((step, index) => (
-                <div key={step.id} className="timeline-item">
-                  <div className="timeline-marker">
-                    <div
-                      className={`timeline-bubble ${
-                        step.status === 'done'
-                          ? 'timeline-bubble-done'
-                          : step.status === 'active'
-                            ? 'timeline-bubble-active'
-                            : 'timeline-bubble-pending'
-                      }`}
-                    >
-                      {index + 1}
-                    </div>
-                    {index < currentDelivery.trackingSteps.length - 1 ? <div className="timeline-connector" /> : null}
-                  </div>
-                  <div className="timeline-content">
-                    <h3 className="text-sm font-bold">{step.title}</h3>
-                    <p className="mt-1 text-sm leading-5 text-slate-500">{step.description}</p>
-                    <p className="mt-2 text-xs text-slate-600">{step.time}</p>
-                  </div>
-                </div>
-              ))}
+              <DeliveryTimeline steps={currentDelivery.trackingSteps} />
             </div>
           </Card>
         </div>
@@ -245,16 +228,16 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
                 Modifier les instructions
               </button>
               <button className="rounded-lg border border-[#F87171]/25 bg-[#F87171]/10 px-4 py-3 text-sm font-bold text-[#F87171]">
-                Signaler un probleme
+                Signaler un problème
               </button>
             </div>
           </Card>
 
           {!isMerchant ? (
             <Card className="p-5">
-              <h2 className="text-sm font-bold">Confirmer la reception</h2>
+              <h2 className="text-sm font-bold">Confirmer la réception</h2>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                {canConfirm ? 'La livraison est terminee, la reception peut etre confirmee.' : 'Disponible lorsque le colis sera remis.'}
+                {canConfirm ? 'La livraison est terminée, la réception peut être confirmée.' : 'Disponible lorsque le colis sera remis.'}
               </p>
               <button
                 className={`mt-4 w-full rounded-lg px-4 py-3 text-sm font-bold ${
@@ -271,7 +254,7 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
             onClick={() => onNavigate(isMerchant ? 'merchant' : 'client')}
             className="text-sm font-bold text-[#8BA8FF]"
           >
-            {isMerchant ? 'Retour au tableau de bord' : "Retour a l'accueil client"}
+            {isMerchant ? 'Retour au tableau de bord' : "Retour à l’accueil client"}
           </button>
         </div>
       </div>

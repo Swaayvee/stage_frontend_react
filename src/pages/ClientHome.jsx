@@ -14,7 +14,7 @@ function ClientHome({ onNavigate, selectedDeliveryId, onSelectDelivery }) {
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6C8EFF]">Espace client</p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Bonjour, Marie</h1>
           <p className="mt-2 text-sm text-slate-400">
-            Vous avez {activeDeliveries} livraisons a surveiller et {deliveredCount} livraisons terminees.
+            Vous avez {activeDeliveries} livraisons à surveiller et {deliveredCount} livraisons terminées.
           </p>
         </div>
         <button
@@ -31,7 +31,7 @@ function ClientHome({ onNavigate, selectedDeliveryId, onSelectDelivery }) {
             <StatusPill tone={currentDelivery.tone}>{currentDelivery.statusLabel}</StatusPill>
             <h2 className="mt-4 text-2xl font-extrabold">Suivi {currentDelivery.shortId}</h2>
             <p className="mt-2 text-sm text-slate-300">
-              Commande {currentDelivery.order} - {currentDelivery.courier.shortName} a environ{' '}
+              Commande {currentDelivery.order} — {currentDelivery.courier.shortName} est à environ{' '}
               {currentDelivery.courier.distance}
             </p>
             <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
@@ -41,12 +41,12 @@ function ClientHome({ onNavigate, selectedDeliveryId, onSelectDelivery }) {
               />
             </div>
             <div className="mt-2 flex justify-between text-xs text-slate-500">
-              <span>Depart</span>
+              <span>Départ</span>
               <span>Chez vous</span>
             </div>
             <div className="mt-6 flex items-end justify-between border-t border-white/10 pt-5">
               <div>
-                <p className="text-xs text-slate-500">Arrivee estimee</p>
+                <p className="text-xs text-slate-500">Arrivée estimée</p>
                 <p className="text-3xl font-extrabold text-[#34D399]">{currentDelivery.eta}</p>
               </div>
               <button onClick={() => onNavigate('tracking', currentDelivery.id)} className="text-sm font-bold text-[#8BA8FF]">
@@ -62,7 +62,7 @@ function ClientHome({ onNavigate, selectedDeliveryId, onSelectDelivery }) {
             <p className="mt-2 text-4xl font-extrabold text-[#8BA8FF]">1</p>
           </Card>
           <Card className="p-6">
-            <p className="text-sm text-slate-400">Livrees</p>
+            <p className="text-sm text-slate-400">Livrées</p>
             <p className="mt-2 text-4xl font-extrabold text-[#34D399]">8</p>
           </Card>
         </div>
