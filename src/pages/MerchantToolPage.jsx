@@ -81,7 +81,7 @@ function DeliveriesPage({ onNavigate }) {
     <Card className="overflow-hidden">
       <CardHeader title="Livraisons" />
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
+        <table className="w-full min-w-190 text-left text-sm">
           <thead className="border-b border-white/10 text-xs uppercase tracking-[0.12em] text-slate-600">
             <tr>
               <th className="px-5 py-3">Ref</th>
@@ -136,8 +136,8 @@ function StatsPage() {
           {weeklyStats.map((stat) => (
             <div key={stat.day} className="flex flex-1 flex-col items-center gap-3">
               <div className="flex h-48 w-full items-end gap-1" title={`${stat.internal} internes · ${stat.external} transporteurs`}>
-                <div className="flex-1 rounded-t bg-gradient-to-t from-[#6C8EFF]/25 to-[#6C8EFF]" style={{ height: `${stat.internal * 15}px` }} />
-                <div className="flex-1 rounded-t bg-gradient-to-t from-[#A78BFA]/25 to-[#A78BFA]" style={{ height: `${stat.external * 15}px` }} />
+                <div className="flex-1 rounded-t bg-linear-to-t from-[#6C8EFF]/25 to-[#6C8EFF]" style={{ height: `${stat.internal * 15}px` }} />
+                <div className="flex-1 rounded-t bg-linear-to-t from-[#A78BFA]/25 to-[#A78BFA]" style={{ height: `${stat.external * 15}px` }} />
               </div>
               <span className="text-xs font-bold text-slate-500">{stat.day} · {stat.internal + stat.external}</span>
             </div>

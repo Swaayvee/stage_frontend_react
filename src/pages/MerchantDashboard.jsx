@@ -82,7 +82,7 @@ function MerchantDashboard({ onNavigate }) {
               <div className="p-5 text-sm text-slate-500">Toutes les livraisons sont affectées.</div>
             ) : (
               <div className="grid items-start gap-5 p-5 xl:grid-cols-[minmax(270px,0.72fr)_minmax(0,1.28fr)]">
-                <div className="max-h-[420px] space-y-3 overflow-y-auto pr-1 scrollbar-hidden">
+                <div className="max-h-105 space-y-3 overflow-y-auto pr-1 scrollbar-hidden">
                   <div className="flex items-center justify-between px-1">
                     <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Livraisons à traiter</span>
                     <span className="text-xs font-bold text-[#FBC15A]">{pendingDeliveries.length}</span>
@@ -95,9 +95,9 @@ function MerchantDashboard({ onNavigate }) {
                         setSelectedAssignee(null)
                         setHandlingMode(delivery.distanceKm > 50 ? 'carrier' : 'internal')
                       }}
-                      className={`group relative min-h-[154px] w-full overflow-hidden rounded-lg border p-4 text-left transition ${
+                      className={`group relative min-h-38.5 w-full overflow-hidden rounded-lg border p-4 text-left transition ${
                         selectedPendingId === delivery.id
-                          ? 'border-[#6C8EFF]/45 bg-gradient-to-br from-[#6C8EFF]/16 to-[#A78BFA]/8 shadow-[0_12px_30px_rgba(108,142,255,0.10)]'
+                          ? 'border-[#6C8EFF]/45 bg-linear-to-br from-[#6C8EFF]/16 to-[#A78BFA]/8 shadow-[0_12px_30px_rgba(108,142,255,0.10)]'
                           : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]'
                       }`}
                     >
@@ -147,8 +147,8 @@ function MerchantDashboard({ onNavigate }) {
               {weeklyStats.map((stat) => (
                 <div key={stat.day} className="flex flex-1 flex-col items-center gap-2">
                   <div className="flex h-36 w-full items-end gap-1" title={`${stat.internal} internes · ${stat.external} transporteurs`}>
-                    <div className="flex-1 rounded-t bg-gradient-to-t from-[#6C8EFF]/30 to-[#6C8EFF]" style={{ height: `${stat.internal * 10}px` }} />
-                    <div className="flex-1 rounded-t bg-gradient-to-t from-[#A78BFA]/30 to-[#A78BFA]" style={{ height: `${stat.external * 10}px` }} />
+                    <div className="flex-1 rounded-t bg-linear-to-t from-[#6C8EFF]/30 to-[#6C8EFF]" style={{ height: `${stat.internal * 10}px` }} />
+                    <div className="flex-1 rounded-t bg-linear-to-t from-[#A78BFA]/30 to-[#A78BFA]" style={{ height: `${stat.external * 10}px` }} />
                   </div>
                   <div className="text-xs font-semibold text-slate-500">{stat.day} · {stat.internal + stat.external}</div>
                 </div>
@@ -167,7 +167,7 @@ function MerchantDashboard({ onNavigate }) {
           <Card className="overflow-hidden">
             <CardHeader title="Livraisons récentes" action="Tout voir" onAction={() => onNavigate('merchantDeliveries')} />
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
+              <table className="w-full min-w-190 text-left text-sm">
                 <thead className="border-b border-white/10 text-xs uppercase tracking-[0.12em] text-slate-600">
                   <tr>
                     <th className="px-5 py-3">Ref</th>
@@ -220,7 +220,7 @@ function MerchantDashboard({ onNavigate }) {
                 <button
                   key={action.label}
                   onClick={() => onNavigate(action.route)}
-                  className={`flex h-24 items-center justify-center rounded-lg border bg-gradient-to-br px-3 py-4 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:bg-white/[0.08] ${action.tone}`}
+                  className={`flex h-24 items-center justify-center rounded-lg border bg-linear-to-br px-3 py-4 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:bg-white/[0.08] ${action.tone}`}
                 >
                   {action.label}
                 </button>

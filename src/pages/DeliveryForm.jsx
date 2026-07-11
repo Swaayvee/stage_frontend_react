@@ -251,7 +251,7 @@ function DeliveryForm({ onNavigate }) {
           <button onClick={() => onNavigate('client')} className="rounded-lg border border-white/10 px-5 py-3 text-sm font-bold text-slate-300">
             Retour
           </button>
-          <button onClick={() => onNavigate('tracking')} className="rounded-lg bg-gradient-to-r from-[#6C8EFF] to-[#A78BFA] px-5 py-3 text-sm font-bold text-white">
+          <button onClick={() => onNavigate('tracking')} className="rounded-lg bg-linear-to-r from-[#6C8EFF] to-[#A78BFA] px-5 py-3 text-sm font-bold text-white">
             Continuer
           </button>
         </div>

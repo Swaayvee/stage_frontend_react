@@ -19,7 +19,7 @@ function ClientHome({ onNavigate, selectedDeliveryId, onSelectDelivery }) {
         </div>
         <button
           onClick={() => onNavigate('form')}
-          className="rounded-lg bg-gradient-to-r from-[#6C8EFF] to-[#A78BFA] px-5 py-3 text-sm font-bold text-white"
+          className="rounded-lg bg-linear-to-r from-[#6C8EFF] to-[#A78BFA] px-5 py-3 text-sm font-bold text-white"
         >
           Nouvelle livraison
         </button>
@@ -27,7 +27,7 @@ function ClientHome({ onNavigate, selectedDeliveryId, onSelectDelivery }) {
 
       <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
         <Card className="overflow-hidden">
-          <div className="border-b border-white/10 bg-gradient-to-br from-[#6C8EFF]/15 to-[#A78BFA]/10 p-6">
+          <div className="border-b border-white/10 bg-linear-to-br from-[#6C8EFF]/15 to-[#A78BFA]/10 p-6">
             <StatusPill tone={currentDelivery.tone}>{currentDelivery.statusLabel}</StatusPill>
             <h2 className="mt-4 text-2xl font-extrabold">Suivi {currentDelivery.shortId}</h2>
             <p className="mt-2 text-sm text-slate-300">
@@ -36,7 +36,7 @@ function ClientHome({ onNavigate, selectedDeliveryId, onSelectDelivery }) {
             </p>
             <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#6C8EFF] to-[#A78BFA]"
+                className="h-full rounded-full bg-linear-to-r from-[#6C8EFF] to-[#A78BFA]"
                 style={{ width: `${currentDelivery.progress}%` }}
               />
             </div>

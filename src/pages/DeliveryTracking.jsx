@@ -178,7 +178,7 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
             <div className="p-5">
               <div className="h-2 overflow-hidden rounded-full bg-white/10">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#6C8EFF] via-[#A78BFA] to-[#34D399]"
+                  className="h-full rounded-full bg-linear-to-r from-[#6C8EFF] via-[#A78BFA] to-[#34D399]"
                   style={{ width: `${currentDelivery.progress}%` }}
                 />
               </div>
@@ -221,7 +221,7 @@ function DeliveryTracking({ onNavigate, selectedDeliveryId, onSelectDelivery, pe
           <Card className="p-5">
             <h2 className="mb-4 text-sm font-bold">Actions</h2>
             <div className="grid gap-3">
-              <button className="rounded-lg bg-gradient-to-r from-[#6C8EFF] to-[#A78BFA] px-4 py-3 text-sm font-bold">
+              <button className="rounded-lg bg-linear-to-r from-[#6C8EFF] to-[#A78BFA] px-4 py-3 text-sm font-bold">
                 Contacter l'intervenant
               </button>
               <button className="rounded-lg border border-white/10 px-4 py-3 text-sm font-bold text-slate-300">

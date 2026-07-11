@@ -119,7 +119,7 @@ function AssignmentPanel({
           <button
             onClick={onValidate}
             disabled={!selectedAssignee}
-            className="mt-4 w-full rounded-lg bg-gradient-to-r from-[#6C8EFF] to-[#A78BFA] px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-4 w-full rounded-lg bg-linear-to-r from-[#6C8EFF] to-[#A78BFA] px-4 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
             Valider l&apos;affectation
           </button>

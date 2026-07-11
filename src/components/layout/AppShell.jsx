@@ -12,7 +12,7 @@ function AppShell({ children, currentView, selectedDeliveryId, onNavigate }) {
   const activeView = currentView === 'merchantTracking' ? 'tracking' : currentView.startsWith('merchant') ? 'merchant' : currentView
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#070C1A] text-slate-100">
+    <div className="relative min-h-screen lg:overflow-x-hidden bg-[#070C1A] text-slate-100">
       <div className="ambient-background" aria-hidden="true">
         <span className="ambient-orb ambient-orb-one" />
         <span className="ambient-orb ambient-orb-two" />
@@ -22,17 +22,15 @@ function AppShell({ children, currentView, selectedDeliveryId, onNavigate }) {
 
       <aside
         className={`fixed left-0 top-0 z-40 hidden h-screen bg-transparent px-3 py-7 transition-all duration-300 lg:flex lg:flex-col ${
-          sidebarCollapsed ? 'w-28 border-r-0 backdrop-blur-0' : 'w-64 border-r border-white/10 backdrop-blur-[2px]'
+          sidebarCollapsed ? 'w-32 border-r-0 backdrop-blur-0' : 'w-64 border-r border-white/10 backdrop-blur-[2px]'
         }`}
       >
         <button
-          className={`mb-8 px-3 text-left font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#6C8EFF] to-[#A78BFA] transition ${
-            sidebarCollapsed ? 'text-2xl' : 'text-2xl'
-          }`}
+          className={`mb-8 px-3 text-left font-extrabold tracking-tight text-transparent bg-clip-text bg-linear-to-r from-[#6C8EFF] to-[#A78BFA] transition 'text-2xl'  }`}
           onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
           title={sidebarCollapsed ? 'Deplier la sidebar' : 'Retracter la sidebar'}
         >
-          App
+          Nom App
         </button>
 
         <div
@@ -52,15 +50,15 @@ function AppShell({ children, currentView, selectedDeliveryId, onNavigate }) {
               key={item.id}
               onClick={() => onNavigate(item.id)}
               title={sidebarCollapsed ? item.label : undefined}
-              className={`group rounded-lg px-3 py-3 text-left transition ${
+              className={`group rounded-lg px-3 py-3 text-left transition border ${
                 activeView === item.id
-                  ? 'border border-[#6C8EFF]/25 bg-[#6C8EFF]/15 text-white shadow-[0_0_28px_rgba(108,142,255,0.14)]'
-                  : 'border border-transparent text-slate-400 hover:border-white/10 hover:bg-white/[0.06] hover:text-slate-100'
+                  ? 'border-[#6C8EFF]/25 bg-[#6C8EFF]/15 text-white shadow-[0_0_28px_rgba(108,142,255,0.14)]'
+                  : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/[0.06] hover:text-slate-100'
               }`}
             >
               <span className="flex items-center justify-between gap-3">
-                <span className={`text-sm font-bold ${sidebarCollapsed ? 'mx-auto' : ''}`}>
-                  {sidebarCollapsed ? item.label.charAt(0) : item.label}
+                <span className={`text-sm font-bold`}>
+                  {item.label}
                 </span>
                 {item.badge && !sidebarCollapsed ? (
                   <span
@@ -72,18 +70,16 @@ function AppShell({ children, currentView, selectedDeliveryId, onNavigate }) {
                   </span>
                 ) : null}
               </span>
-              {!sidebarCollapsed ? (
-                <span className="mt-1 block text-xs text-slate-600 group-hover:text-slate-500">{itemMeta}</span>
-              ) : null}
+              <span className="mt-1 block text-xs text-slate-600 group-hover:text-slate-500">{itemMeta}</span>
             </button>
             )
           })}
         </nav>
 
         <div className={`pt-4 ${sidebarCollapsed ? 'border-t-0' : 'border-t border-white/10'}`}>
-          <div className={`rounded-lg p-3 transition ${sidebarCollapsed ? 'border border-transparent bg-transparent px-3' : 'border border-white/10 bg-white/[0.03]'}`}>
-            <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-start' : ''}`}>
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-[#6C8EFF] to-[#A78BFA] text-sm font-bold">
+          <div className={`rounded-lg p-3 transition border ${sidebarCollapsed ? 'border-transparent bg-transparent px-3' : 'border-white/10 bg-white/[0.03]'}`}>
+            <div className={`flex items-center gap-3 justify-start`}>
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-linear-to-br from-[#6C8EFF] to-[#A78BFA] text-sm font-bold">
                 M
               </div>
               <div className={`min-w-0 ${sidebarCollapsed ? 'hidden' : ''}`}>
@@ -95,34 +91,34 @@ function AppShell({ children, currentView, selectedDeliveryId, onNavigate }) {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#070C1A]/85 backdrop-blur-xl lg:hidden">
+      <header className="sticky top-0 z-40 backdrop-blur-xl lg:hidden">
         <div className="flex h-16 items-center justify-between px-4">
           <button
-            className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#6C8EFF] to-[#A78BFA]"
+            className="text-xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-[#6C8EFF] to-[#A78BFA]"
             onClick={() => onNavigate('client')}
           >
             App
           </button>
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#6C8EFF] to-[#A78BFA] text-sm font-bold">
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-linear-to-br from-[#6C8EFF] to-[#A78BFA] text-sm font-bold">
             M
           </div>
         </div>
       </header>
 
-      <main className={`relative z-10 pb-24 transition-all duration-300 lg:pb-0 ${sidebarCollapsed ? 'lg:pl-28' : 'lg:pl-64'}`}>
+      <main className={`relative z-10 pb-24 transition-all duration-300 lg:pb-0 ${sidebarCollapsed ? 'lg:pl-32' : 'lg:pl-64'}`}>
         {children}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 border-t border-white/10 bg-[#070C1A]/90 p-2 backdrop-blur-2xl lg:hidden">
+      <nav className={`fixed inset-x-0 bottom-0 z-50 grid grid-cols-${navItems.length} border-t border-white/10 bg-[#070C1A]/90 p-2 backdrop-blur-2xl lg:hidden`}>
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
-            className={`rounded-lg px-2 py-2 text-[11px] font-bold transition ${
+            className={`rounded-lg px-2 py-2 text-md font-bold transition ${
               activeView === item.id ? 'bg-[#6C8EFF]/20 text-[#8BA8FF]' : 'text-slate-500 hover:bg-white/[0.06]'
             }`}
           >
-            {item.label.split(' ')[0]}
+            {item.label}
           </button>
         ))}
       </nav>
