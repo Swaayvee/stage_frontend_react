@@ -6,16 +6,14 @@
   --blue: #6c8eff;
 }
 * {
-  box-sizing: border-box;
+  @apply box-border;
 }
 html,
 body {
-  min-height: 100%;
-  background: var(--ink);
+  @apply min-h-full bg-[#070c1a];
 }
 body {
-  margin: 0;
-  color: #e6ebf7;
+  @apply m-0 text-[#e6ebf7] antialiased;
   font-family: Arial, Helvetica, sans-serif;
 }
 button,
@@ -25,7 +23,7 @@ textarea {
   font: inherit;
 }
 button {
-  cursor: pointer;
+  @apply cursor-pointer;
 }
 select {
   color-scheme: dark;
@@ -537,24 +535,14 @@ select option {
   font-weight: 800;
 }
 .small {
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
-  color: #dbeafe;
-  border-radius: 7px;
-  padding: 0.55rem 0.7rem;
-  font-size: 0.72rem;
-  font-weight: 700;
+  @apply inline-flex min-h-[42px] items-center justify-center rounded-[7px] border border-white/15 bg-white/5 px-[0.7rem] py-[0.55rem] text-center text-[0.72rem] font-bold leading-tight text-blue-100;
   margin-right: 0.5rem;
 }
 .good {
-  border-color: rgba(52, 211, 153, 0.3);
-  background: rgba(52, 211, 153, 0.12);
-  color: #7ce7b2;
+  @apply border-emerald-400/30 bg-emerald-400/12 text-emerald-300;
 }
 .danger {
-  border-color: rgba(248, 113, 113, 0.3);
-  background: rgba(248, 113, 113, 0.1);
-  color: #fca5a5;
+  @apply border-red-400/30 bg-red-400/10 text-red-300;
 }
 .success {
   color: #7ce7b2;
@@ -819,7 +807,6 @@ select option {
 }
 .small {
   text-decoration: none;
-  display: inline-block;
 }
 .status-panel {
   max-width: 760px;

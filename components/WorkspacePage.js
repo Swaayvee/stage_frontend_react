@@ -357,7 +357,10 @@ function Cards({ type, role }) {
               </>
             ) : type === "issues" ? (
               <>
-                <Link className="small" href={`/${role}/issues/${id}`}>
+                <Link
+                  className="small inline-flex items-center justify-center text-center"
+                  href={`/${role}/issues/${id}`}
+                >
                   Voir l’incident
                 </Link>
                 <button
