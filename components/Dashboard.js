@@ -15,7 +15,6 @@ const content = {
     ],
     actions: [
       ["Créer une livraison", "/merchant/deliveries/new"],
-      ["Gérer les livreurs", "/merchant/couriers"],
     ],
     recentActivityTitle: "Vos commandes & livraisons",
     recentActivityDesc: "Dernières commandes et livraisons de votre boutique",
