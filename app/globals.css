@@ -357,6 +357,10 @@ select option {
 .actions {
   padding: 1.4rem;
 }
+.table-panel {
+  width: 100%;
+  min-width: 0;
+}
 .section-title {
   display: flex;
   justify-content: space-between;
@@ -379,6 +383,7 @@ select option {
 }
 .table {
   margin-top: 1rem;
+  width: 100%;
 }
 .row {
   display: grid;
@@ -402,6 +407,7 @@ select option {
   border-radius: 999px;
   font-size: 0.66rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 .pill.blue {
   background: rgba(108, 142, 255, 0.15);

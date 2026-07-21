@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 const pages = {
   "merchant/deliveries/new": [
     "Nouvelle livraison",
-    "Créez une livraison et choisissez son mode d’attribution.",
+    "Créez une livraison et choisissez le livreur.",
     "delivery",
   ],
   "merchant/deliveries": [
@@ -13,15 +13,10 @@ const pages = {
     "Suivez et gérez vos expéditions.",
     "table",
   ],
-  "merchant/couriers": [
-    "Liste des livreurs",
-    "Livreurs disponibles dans vos zones.",
-    "table",
-  ],
-  "merchant/relay-points": [
-    "Points relais",
-    "Informez le point relais lorsqu’un livreur ne peut pas assurer la livraison.",
-    "relay",
+  "merchant/assign-courier": [
+    "Assigner un livreur",
+    "Sélectionnez un livreur pour votre livraison.",
+    "assign-courier",
   ],
   "courier/available": [
     "Livraisons disponibles",
@@ -39,17 +34,17 @@ const pages = {
     "status",
   ],
   "manager/applications": [
-    "Demandes d’adhésion",
+    "Demandes d'adhésion",
     "Étudiez les demandes des commerçants et livreurs.",
     "applications",
   ],
   "manager/applications/MER-028": [
-    "Dossier d’adhésion · MER-028",
+    "Dossier d'adhésion · MER-028",
     "Épicerie des Canuts — demande commerçant à étudier.",
     "application-detail",
   ],
   "manager/applications/LIV-156": [
-    "Dossier d’adhésion · LIV-156",
+    "Dossier d'adhésion · LIV-156",
     "Nora Petit — demande livreur à étudier.",
     "application-detail",
   ],
@@ -65,7 +60,7 @@ const pages = {
   ],
   "manager/issues/INC-039": [
     "Incident INC-039",
-    "Retard signalé sur une livraison de l’Atelier Nami.",
+    "Retard signalé sur une livraison de l'Atelier Nami.",
     "issue-detail",
   ],
   "super-manager/managers": [
@@ -80,12 +75,12 @@ const pages = {
   ],
   "super-manager/merchants": [
     "Tous les commerçants",
-    "Recherchez les commerces de toute la plateforme.",
+    "Recherchez et cliquez pour voir les détails complets.",
     "merchants",
   ],
   "super-manager/couriers": [
     "Tous les livreurs",
-    "Recherchez et contrôlez les livreurs de tout le réseau.",
+    "Recherchez et cliquez pour voir les détails complets.",
     "couriers",
   ],
   "super-manager/deliveries": [
@@ -144,16 +139,9 @@ function Form({ type }) {
           ["Nom du client", "text"],
           ["Téléphone du client", "tel"],
           ["Adresse de livraison", "text"],
-          ["Point relais (si nécessaire)", "text"],
-          ["Mode d’attribution", "select"],
+          ["Mode d'attribution", "select"],
         ]
-      : type === "relay"
-        ? [
-            ["Point relais", "select"],
-            ["Référence de la livraison", "text"],
-            ["Message au point relais", "textarea"],
-          ]
-        : [
+      : [
             ["Prénom et nom", "text"],
             ["E-mail professionnel", "email"],
             ["Zone ou périmètre", "text"],
@@ -170,9 +158,7 @@ function Form({ type }) {
       {fields.map(([l, t]) => (
         <label key={l}>
           {l}
-          {t === "textarea" ? (
-            <textarea placeholder={l} />
-          ) : t === "select" ? (
+          {t === "select" ? (
             <select defaultValue="">
               <option value="" disabled>
                 Choisir une option
@@ -194,15 +180,20 @@ function Form({ type }) {
     </form>
   );
 }
-function Directory({ type }) {
-  const [query, setQuery] = useState("");
+function Directory({ type, role }) {
+  const [query, setQuery] = useState(""),
+    [sort, setSort] = useState("name"),
+    [zone, setZone] = useState("all"),
+    [selectedUser, setSelectedUser] = useState(null);
   const rows = directory[type];
+  const zones = [...new Set(rows.map((r) => r[3]))];
   const filtered = useMemo(
     () =>
-      rows.filter((r) =>
-        r.join(" ").toLowerCase().includes(query.toLowerCase()),
-      ),
-    [rows, query],
+      [...rows]
+        .filter((r) => r.join(" ").toLowerCase().includes(query.toLowerCase()))
+        .filter((r) => zone === "all" || r[3] === zone)
+        .sort((a, b) => (sort === "zone" ? a[3].localeCompare(b[3]) : a[1].localeCompare(b[1]))),
+    [rows, query, sort, zone],
   );
   const labels =
     type === "managers"
@@ -219,6 +210,14 @@ function Directory({ type }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder={`Rechercher un ${type === "merchants" ? "commerçant" : type === "couriers" ? "livreur" : "manager"}…`}
         />
+        <select aria-label="Filtrer par zone" value={zone} onChange={(e) => setZone(e.target.value)}>
+          <option value="all">Toutes les zones</option>
+          {zones.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
+        <select aria-label="Trier" value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="name">Trier par nom</option>
+          <option value="zone">Trier par zone</option>
+        </select>
         <span>{filtered.length} résultat(s)</span>
       </div>
       <div className="table">
@@ -228,13 +227,98 @@ function Directory({ type }) {
           ))}
         </div>
         {filtered.map((r) => (
-          <div className="row" key={r[0]}>
+          <div 
+            className={role === "super-manager" ? "row cursor-pointer hover:bg-white/5 transition-colors" : "row"}
+            key={r[0]}
+            onClick={() => role === "super-manager" && setSelectedUser(r)}
+          >
             {r.map((x) => (
               <span key={x}>{x}</span>
             ))}
           </div>
         ))}
       </div>
+      {selectedUser && <UserDetailModal user={selectedUser} type={type} onClose={() => setSelectedUser(null)} />}
+    </div>
+  );
+}
+
+function UserDetailModal({ user, type, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={onClose}>
+      <article className="mx-auto my-6 w-full max-w-2xl rounded-2xl border border-white/15 bg-[#0d172b] p-5 shadow-2xl md:p-7" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">{type === "merchants" ? "COMMERÇANT" : type === "couriers" ? "LIVREUR" : "MANAGER"}</p>
+            <h2 className="m-0 text-2xl font-black tracking-tight">{user[0]}</h2>
+            <p className="mt-1 text-sm text-slate-400">{user[1]}</p>
+          </div>
+          <button className="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-200 hover:bg-white/10" onClick={onClose}>Fermer</button>
+        </div>
+        <div className="space-y-4">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <p className="m-0 text-xs font-bold uppercase tracking-wider text-slate-400">Informations</p>
+            <dl className="mt-3 space-y-2">
+              <div>
+                <dt className="text-xs text-slate-500">Référence</dt>
+                <dd className="text-sm font-mono">{user[0]}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Nom</dt>
+                <dd className="text-sm">{user[1]}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">E-mail</dt>
+                <dd className="text-sm">{user[2]}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">{type === "couriers" ? "Véhicule" : "Zone / Périmètre"}</dt>
+                <dd className="text-sm">{user[3]}</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <p className="m-0 text-xs font-bold uppercase tracking-wider text-slate-400">Statistiques</p>
+            <dl className="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <dt className="text-xs text-slate-500">Statut</dt>
+                <dd className="text-sm font-bold text-emerald-300">Actif</dd>
+              </div>
+              {type === "couriers" && (
+                <>
+                  <div>
+                    <dt className="text-xs text-slate-500">Note</dt>
+                    <dd className="text-sm font-bold">4.9 / 5</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-slate-500">Livraisons</dt>
+                    <dd className="text-sm font-bold">156</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-slate-500">Taux réussite</dt>
+                    <dd className="text-sm font-bold text-emerald-300">98%</dd>
+                  </div>
+                </>
+              )}
+              {type === "merchants" && (
+                <>
+                  <div>
+                    <dt className="text-xs text-slate-500">Livraisons/mois</dt>
+                    <dd className="text-sm font-bold">45</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-slate-500">Taux réussite</dt>
+                    <dd className="text-sm font-bold text-emerald-300">97%</dd>
+                  </div>
+                </>
+              )}
+            </dl>
+          </div>
+          <button className="w-full rounded-lg border border-indigo-300/30 bg-indigo-500/15 px-3 py-2 text-sm font-bold text-indigo-100 hover:bg-indigo-500/25">
+            Voir le détail complet
+          </button>
+        </div>
+      </article>
     </div>
   );
 }
@@ -396,7 +480,29 @@ function Cards({ type, role }) {
 function CourierStatus() {
   const [online, setOnline] = useState(true),
     [location, setLocation] = useState(false),
-    [radius, setRadius] = useState("5");
+    [radius, setRadius] = useState("5"),
+    [locationError, setLocationError] = useState("");
+  
+  const requestLocation = () => {
+    if (!navigator.geolocation) return setLocationError("La géolocalisation n'est pas disponible sur cet appareil.");
+    setLocationError("Demande de permission en cours...");
+    navigator.geolocation.getCurrentPosition(
+      () => { 
+        setLocation(true); 
+        setLocationError(""); 
+      },
+      (error) => {
+        const messages = {
+          1: "Permission refusée : veuillez autoriser l'accès à votre localisation dans les paramètres.",
+          2: "Position indisponible : vérifiez votre connexion GPS.",
+          3: "Délai d'attente dépassé : réessayez dans un moment.",
+        };
+        setLocationError(messages[error.code] || "Erreur de géolocalisation.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  };
+  
   return (
     <section className="status-panel panel">
       <div className="status-hero">
@@ -421,10 +527,10 @@ function CourierStatus() {
         <label>
           Zone de recherche
           <select value={radius} onChange={(e) => setRadius(e.target.value)}>
-            <option value="3">Jusqu’à 3 km</option>
-            <option value="5">Jusqu’à 5 km</option>
-            <option value="10">Jusqu’à 10 km</option>
-            <option value="20">Jusqu’à 20 km</option>
+            <option value="3">Jusqu'à 3 km</option>
+            <option value="5">Jusqu'à 5 km</option>
+            <option value="10">Jusqu'à 10 km</option>
+            <option value="20">Jusqu'à 20 km</option>
           </select>
           <small>
             Vous pourrez toujours consulter les livraisons plus éloignées
@@ -441,17 +547,21 @@ function CourierStatus() {
           </div>
           <button
             className={`small ${location ? "good" : ""}`}
-            onClick={() => setLocation(!location)}
+            onClick={requestLocation}
           >
             {location ? "Localisation autorisée" : "Autoriser"}
           </button>
         </div>
+        {locationError && <p className="m-0 text-xs text-amber-300 mt-2">{locationError}</p>}
       </div>
     </section>
   );
 }
 function Detail({ type }) {
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(""),
+    [reportIssue, setReportIssue] = useState(false),
+    [issueDescription, setIssueDescription] = useState("");
+  
   if (type === "application-detail")
     return (
       <section className="detail panel">
@@ -478,7 +588,7 @@ function Detail({ type }) {
           className="small good"
           onClick={() => setStatus("Demande acceptée")}
         >
-          Valider l’adhésion
+          Valider l'adhésion
         </button>
         <button
           className="small danger"
@@ -489,9 +599,10 @@ function Detail({ type }) {
         {status && <p className="action-feedback">✓ {status}</p>}
       </section>
     );
+  
   return (
     <section className="detail panel">
-      <h2>Détail de l’incident</h2>
+      <h2>Détail de l'incident</h2>
       <dl>
         <div>
           <dt>Livraison</dt>
@@ -523,6 +634,50 @@ function Detail({ type }) {
         Suspendre le compte concerné
       </button>
       {status && <p className="action-feedback">✓ {status}</p>}
+      
+      <div className="mt-6 pt-6 border-t border-white/10">
+        <h3>Signaler un problème</h3>
+        <p className="text-sm text-slate-400">Si vous avez rencontré un problème avec cette livraison, signalez-le.</p>
+        {!reportIssue ? (
+          <button 
+            className="small" 
+            onClick={() => setReportIssue(true)}
+          >
+            Signaler un problème
+          </button>
+        ) : (
+          <div className="space-y-3 mt-3">
+            <label>
+              Description du problème
+              <textarea 
+                placeholder="Décrivez le problème rencontré..." 
+                value={issueDescription}
+                onChange={(e) => setIssueDescription(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
+                rows={4}
+              />
+            </label>
+            <div className="flex gap-3">
+              <button 
+                className="small good"
+                onClick={() => {
+                  setStatus("Problème signalé avec succès");
+                  setReportIssue(false);
+                  setIssueDescription("");
+                }}
+              >
+                Envoyer
+              </button>
+              <button 
+                className="small"
+                onClick={() => setReportIssue(false)}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -560,6 +715,87 @@ function GenericTable() {
     </div>
   );
 }
+
+function AssignCourier() {
+  const [query, setQuery] = useState(""),
+    [sort, setSort] = useState("distance"),
+    [zone, setZone] = useState("all"),
+    [selected, setSelected] = useState(null);
+  
+  const couriers = [
+    ["LIV-103", "Maya Richard", "Vélo électrique", "Lyon 3e", 2.1],
+    ["LIV-121", "Karim Diallo", "Scooter", "Villeurbanne", 4.5],
+    ["LIV-144", "Inès Laurent", "Voiture", "Lyon 7e", 8.2],
+  ];
+  
+  const zones = [...new Set(couriers.map((c) => c[3]))];
+  const filtered = [...couriers]
+    .filter((r) => r.join(" ").toLowerCase().includes(query.toLowerCase()))
+    .filter((r) => zone === "all" || r[3] === zone)
+    .sort((a, b) => sort === "distance" ? a[4] - b[4] : a[1].localeCompare(b[1]));
+  
+  return (
+    <section className="space-y-4">
+      <div className="directory-toolbar delivery-filter">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Nom, référence ou véhicule…"
+        />
+        <select value={zone} onChange={(e) => setZone(e.target.value)}>
+          <option value="all">Toutes les zones</option>
+          {zones.map((z) => <option key={z} value={z}>{z}</option>)}
+        </select>
+        <select value={sort} onChange={(e) => setSort(e.target.value)}>
+          <option value="distance">Trier par distance</option>
+          <option value="name">Trier par nom</option>
+        </select>
+      </div>
+      <div className="cards">
+        {filtered.map((courier) => (
+          <button 
+            type="button" 
+            onClick={() => setSelected(courier)} 
+            className="panel action-card text-left transition hover:-translate-y-0.5 hover:border-indigo-300/60" 
+            key={courier[0]}
+          >
+            <span className="mini-label">{courier[3]}</span>
+            <h2>{courier[0]} · {courier[1]}</h2>
+            <p>{courier[2]} · {courier[4].toFixed(1)} km</p>
+            <span className="text-xs font-bold text-indigo-200">Sélectionner →</span>
+          </button>
+        ))}
+      </div>
+      {selected && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={() => setSelected(null)}>
+          <article className="mx-auto my-6 w-full max-w-2xl rounded-2xl border border-white/15 bg-[#0d172b] p-5 shadow-2xl md:p-7" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">CONFIRMATION DE LIVREUR</p>
+                <h2 className="m-0 text-2xl font-black tracking-tight">{selected[1]}</h2>
+                <p className="mt-1 text-sm text-slate-400">{selected[0]} · {selected[2]}</p>
+              </div>
+              <button className="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-200 hover:bg-white/10" onClick={() => setSelected(null)}>Fermer</button>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className="m-0 text-xs font-bold uppercase tracking-wider text-slate-400">Détails du livreur</p>
+                <dl className="mt-3 space-y-2">
+                  <div><dt className="text-xs text-slate-500">Référence</dt><dd className="text-sm">{selected[0]}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Nom</dt><dd className="text-sm">{selected[1]}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Véhicule</dt><dd className="text-sm">{selected[2]}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Zone</dt><dd className="text-sm">{selected[3]}</dd></div>
+                  <div><dt className="text-xs text-slate-500">Distance</dt><dd className="text-sm">{selected[4]} km</dd></div>
+                </dl>
+              </div>
+              <button className="button w-full border-0">Confirmer ce livreur</button>
+            </div>
+          </article>
+        </div>
+      )}
+    </section>
+  );
+}
 export default function WorkspacePage({ role, section }) {
   const page = pages[`${role}/${section}`];
   if (!page)
@@ -585,19 +821,21 @@ export default function WorkspacePage({ role, section }) {
             Créer un manager
           </Link>
         ) : (
-          type !== "delivery" && (
+          !["delivery", "assign-courier"].includes(type) && (
             <Link href={`/${role}`} className="button">
               ← Tableau de bord
             </Link>
           )
         )}
       </header>
-      {["delivery", "relay", "manager"].includes(type) ? (
+      {["delivery", "manager"].includes(type) ? (
         <Form type={type} />
+      ) : type === "assign-courier" ? (
+        <AssignCourier />
       ) : type === "status" ? (
         <CourierStatus />
       ) : ["managers", "merchants", "couriers"].includes(type) ? (
-        <Directory type={type} />
+        <Directory type={type} role={role} />
       ) : type === "available" ? (
         <DeliverySearch />
       ) : ["applications", "issues", "mine"].includes(type) ? (
