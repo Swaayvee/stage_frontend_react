@@ -681,37 +681,226 @@ function Detail({ type }) {
     </section>
   );
 }
-function GenericTable() {
+function GenericTable({ role }) {
+  const [query, setQuery] = useState(""),
+    [sort, setSort] = useState("recent"),
+    [page, setPage] = useState(1),
+    [selectedDelivery, setSelectedDelivery] = useState(null),
+    [assignMode, setAssignMode] = useState(false);
+
+  const allDeliveries = [
+    ["LIV-2026-042", "Maison Olive", "Lyon 2e", "En livraison", "Maya Richard"],
+    ["LIV-2026-041", "Atelier Nami", "Lyon 7e", "À attribuer", null],
+    ["LIV-2026-040", "Le Camion Vert", "Villeurbanne", "Livrée", "Karim Diallo"],
+    ["LIV-2026-039", "Épicerie des Canuts", "Lyon 4e", "En livraison", "Inès Laurent"],
+    ["LIV-2026-038", "Maison Olive", "Villeurbanne", "À attribuer", null],
+    ["LIV-2026-037", "Atelier Céramique", "Lyon 3e", "Livrée", "Maya Richard"],
+  ];
+
+  const filtered = useMemo(
+    () =>
+      [...allDeliveries]
+        .filter((r) => r.join(" ").toLowerCase().includes(query.toLowerCase()))
+        .sort((a, b) => (sort === "reference" ? a[0].localeCompare(b[0]) : 0)),
+    [query, sort],
+  );
+
+  const itemsPerPage = 5;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const start = (page - 1) * itemsPerPage;
+  const paginatedItems = filtered.slice(start, start + itemsPerPage);
+
+  const getStatusColor = (status) => {
+    if (status === "En livraison") return "blue";
+    if (status === "À attribuer") return "amber";
+    return "green";
+  };
+
+  const handleRowClick = (delivery) => {
+    setSelectedDelivery(delivery);
+    setAssignMode(delivery[4] === null);
+  };
+
   return (
-    <div className="panel table-panel">
-      <div className="table">
-        <div className="row table-head">
-          <span>Référence</span>
-          <span>Commerçant</span>
-          <span>Destination</span>
-          <span>Statut</span>
+    <>
+      <div className="panel table-panel">
+        <div className="mb-4 flex flex-wrap gap-3">
+          <input
+            className="min-w-[220px] flex-1 rounded-lg border border-blue-200/25 bg-slate-950/70 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-indigo-400"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher une livraison…"
+          />
+          <select
+            className="rounded-lg border border-blue-200/25 bg-slate-950 px-3 py-2 text-sm"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="recent">Trier par récent</option>
+            <option value="reference">Trier par référence</option>
+          </select>
         </div>
-        {[
-          ["LIV-2026-042", "Maison Olive", "Lyon 2e", "En livraison"],
-          ["LIV-2026-041", "Atelier Nami", "Lyon 7e", "À attribuer"],
-          ["LIV-2026-040", "Le Camion Vert", "Villeurbanne", "Livrée"],
-        ].map((r, i) => (
-          <div className="row" key={r[0]}>
-            {r.map((x, j) => (
-              <span
-                key={x}
-                className={
-                  j === 3
-                    ? `pill ${i === 0 ? "blue" : i === 1 ? "amber" : "green"}`
-                    : ""
-                }
-              >
-                {x}
-              </span>
-            ))}
+        <div className="table">
+          <div className="row table-head">
+            <span>Référence</span>
+            <span>Commerçant</span>
+            <span>Destination</span>
+            <span>Statut</span>
+            {role === "courier" && <span>Livreur</span>}
           </div>
-        ))}
+          {paginatedItems.map((r, i) => (
+            <div 
+              className="row cursor-pointer hover:bg-white/5 transition-colors" 
+              key={r[0]}
+              onClick={() => handleRowClick(r)}
+            >
+              <span>{r[0]}</span>
+              <span>{r[1]}</span>
+              <span>{r[2]}</span>
+              <span className={`pill ${getStatusColor(r[3])}`}>{r[3]}</span>
+              {role === "courier" && <span>{r[4] || "-"}</span>}
+            </div>
+          ))}
+        </div>
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between px-4">
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-50"
+            >
+              ← Précédent
+            </button>
+            <span className="text-sm text-slate-400">
+              Page {page} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+              className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-50"
+            >
+              Suivant →
+            </button>
+          </div>
+        )}
       </div>
+
+      {selectedDelivery && (
+        <DeliveryModal 
+          delivery={selectedDelivery} 
+          role={role}
+          assignMode={assignMode}
+          onClose={() => setSelectedDelivery(null)}
+          onAssign={() => setAssignMode(true)}
+        />
+      )}
+    </>
+  );
+}
+
+function DeliveryModal({ delivery, role, assignMode, onClose, onAssign }) {
+  const [selectedCourier, setSelectedCourier] = useState(null);
+
+  const couriers = [
+    ["LIV-103", "Maya Richard", "Vélo électrique", "4.9 / 5"],
+    ["LIV-121", "Karim Diallo", "Scooter", "4.7 / 5"],
+    ["LIV-144", "Inès Laurent", "Voiture", "4.8 / 5"],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={onClose}>
+      <article className="mx-auto my-6 w-full max-w-2xl rounded-2xl border border-white/15 bg-[#0d172b] p-5 shadow-2xl md:p-7" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">{assignMode ? "ASSIGNER UN LIVREUR" : "DÉTAILS DE LA LIVRAISON"}</p>
+            <h2 className="m-0 text-2xl font-black tracking-tight">{delivery[0]}</h2>
+            <p className="mt-1 text-sm text-slate-400">{delivery[1]} · {delivery[2]}</p>
+          </div>
+          <button className="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-200 hover:bg-white/10" onClick={onClose}>Fermer</button>
+        </div>
+
+        {!assignMode ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="m-0 text-xs font-bold uppercase tracking-wider text-slate-400">Informations</p>
+              <dl className="mt-3 space-y-2">
+                <div>
+                  <dt className="text-xs text-slate-500">Référence</dt>
+                  <dd className="text-sm">{delivery[0]}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500">Commerçant</dt>
+                  <dd className="text-sm">{delivery[1]}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500">Destination</dt>
+                  <dd className="text-sm">{delivery[2]}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500">Statut</dt>
+                  <dd className="text-sm"><span className={`pill ${delivery[3] === "En livraison" ? "blue" : delivery[3] === "À attribuer" ? "amber" : "green"}`}>{delivery[3]}</span></dd>
+                </div>
+                {delivery[4] && (
+                  <div>
+                    <dt className="text-xs text-slate-500">Livreur</dt>
+                    <dd className="text-sm">{delivery[4]}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+            {delivery[3] === "À attribuer" && (
+              <button 
+                onClick={onAssign}
+                className="w-full rounded-lg border border-indigo-300/30 bg-indigo-500/15 px-3 py-2 text-sm font-bold text-indigo-100 hover:bg-indigo-500/25"
+              >
+                Assigner un livreur
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="m-0 text-xs font-bold uppercase tracking-wider text-slate-400">Livreurs disponibles</p>
+              <div className="mt-3 space-y-2">
+                {couriers.map((courier) => (
+                  <button
+                    key={courier[0]}
+                    onClick={() => setSelectedCourier(courier)}
+                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
+                      selectedCourier === courier
+                        ? "border-indigo-400 bg-indigo-500/15"
+                        : "border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-bold">{courier[1]} ({courier[0]})</div>
+                        <div className="text-xs text-slate-400">{courier[2]}</div>
+                      </div>
+                      <div className="text-xs font-bold text-amber-300">{courier[3]}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => onClose()}
+                disabled={!selectedCourier}
+                className="flex-1 rounded-lg border border-indigo-300/30 bg-indigo-500/15 px-3 py-2 text-sm font-bold text-indigo-100 hover:bg-indigo-500/25 disabled:opacity-50"
+              >
+                Confirmer l'assignation
+              </button>
+              <button
+                onClick={() => {}}
+                className="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-200 hover:bg-white/10"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+      </article>
     </div>
   );
 }
@@ -843,7 +1032,7 @@ export default function WorkspacePage({ role, section }) {
       ) : ["application-detail", "issue-detail"].includes(type) ? (
         <Detail type={type} />
       ) : (
-        <GenericTable />
+        <GenericTable role={role} />
       )}
     </>
   );

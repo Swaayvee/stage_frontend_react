@@ -4,30 +4,28 @@ import { usePathname } from "next/navigation";
 
 const menus = {
   merchant: [
-    ["Vue d’ensemble", "/merchant", "▦"],
-    ["Nouvelle livraison", "/merchant/deliveries/new", "＋"],
-    ["Livraisons", "/merchant/deliveries", "□"],
-    ["Livreurs", "/merchant/couriers", "♙"],
-    ["Points relais", "/merchant/relay-points", "⌖"],
+    ["Vue d'ensemble", "/merchant"],
+    ["Nouvelle livraison", "/merchant/deliveries/new"],
+    ["Livraisons", "/merchant/deliveries"],
   ],
   courier: [
-    ["Mon tableau", "/courier", "▦"],
-    ["Livraisons disponibles", "/courier/available", "□"],
-    ["Mes livraisons", "/courier/deliveries", "✓"],
-    ["Mon statut", "/courier/status", "◌"],
+    ["Mon tableau", "/courier"],
+    ["Livraisons disponibles", "/courier/available"],
+    ["Mes livraisons", "/courier/deliveries"],
+    ["Mon statut", "/courier/status"],
   ],
   manager: [
-    ["Vue d’ensemble", "/manager", "▦"],
-    ["Demandes d’adhésion", "/manager/applications", "□"],
-    ["Problèmes signalés", "/manager/issues", "!"],
+    ["Vue d'ensemble", "/manager"],
+    ["Demandes d'adhésion", "/manager/applications"],
+    ["Problèmes signalés", "/manager/issues"],
   ],
   "super-manager": [
-    ["Vue globale", "/super-manager", "▦"],
-    ["Managers", "/super-manager/managers", "♙"],
-    ["Commerçants", "/super-manager/merchants", "⌂"],
-    ["Livreurs", "/super-manager/couriers", "♧"],
-    ["Livraisons", "/super-manager/deliveries", "□"],
-    ["Incidents & bannissements", "/super-manager/issues", "!"],
+    ["Vue globale", "/super-manager"],
+    ["Managers", "/super-manager/managers"],
+    ["Commerçants", "/super-manager/merchants"],
+    ["Livreurs", "/super-manager/couriers"],
+    ["Livraisons", "/super-manager/deliveries"],
+    ["Incidents & bannissements", "/super-manager/issues"],
   ],
 };
 const labels = {
@@ -53,13 +51,12 @@ export default function AppShell({ role, children }) {
         </Link>
         <p className="sidebar-role">ESPACE {labels[role].toUpperCase()}</p>
         <nav>
-          {items.map(([label, href, icon]) => (
+          {items.map(([label, href]) => (
             <Link
               key={href}
               href={href}
               className={pathname === href ? "active" : ""}
             >
-              <i>{icon}</i>
               {label}
             </Link>
           ))}
