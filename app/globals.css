@@ -362,7 +362,6 @@ select option {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  max-height: 85vh;
 }
 .section-title {
   display: flex;
@@ -387,46 +386,64 @@ select option {
 .table {
   margin-top: 1rem;
   width: 100%;
-  flex: 1;
   overflow-y: auto;
   overflow-x: auto;
-  min-height: 300px;
+  min-height: 200px;
 }
 .row {
   display: grid;
-  grid-template-columns: 1.1fr 1.2fr 1fr 0.9fr;
-  gap: 0.5rem;
+  grid-template-columns: 1.2fr 1.3fr 1.1fr 1fr;
+  gap: 0.75rem;
   align-items: center;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.9rem 0;
+  padding: 0.85rem 0.5rem;
   font-size: 0.77rem;
   color: #cbd5e1;
+}
+.row.row-5col {
+  grid-template-columns: 1.1fr 1.2fr 1fr 0.9fr 1fr;
 }
 .table-head {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #64748b;
+  font-weight: 700;
 }
 .pill {
-  justify-self: start;
-  padding: 0.26rem 0.48rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.26rem 0.65rem;
   border-radius: 999px;
   font-size: 0.66rem;
   font-weight: 800;
   white-space: nowrap;
+  line-height: 1.2;
 }
 .pill.blue {
-  background: rgba(108, 142, 255, 0.15);
+  background: rgba(108, 142, 255, 0.18);
   color: #9eb3ff;
+  border: 1px solid rgba(108, 142, 255, 0.35);
 }
 .pill.green {
-  background: rgba(52, 211, 153, 0.15);
+  background: rgba(52, 211, 153, 0.18);
   color: #7ce7b2;
+  border: 1px solid rgba(52, 211, 153, 0.35);
 }
 .pill.amber {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.18);
   color: #fbc15a;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.pill.red {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.pill.purple {
+  background: rgba(167, 139, 250, 0.18);
+  color: #c4b5fd;
+  border: 1px solid rgba(167, 139, 250, 0.35);
 }
 .actions {
   display: flex;
@@ -792,22 +809,41 @@ select option {
 .directory-toolbar {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.6rem;
   margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
 }
 .directory-toolbar input,
 .directory-toolbar select {
-  width: min(100%, 360px);
-  border: 1px solid rgba(191, 219, 254, 0.26);
+  border: 1px solid rgba(191, 219, 254, 0.2);
   border-radius: 8px;
-  padding: 0.7rem 0.8rem;
-  background: #111c34;
+  padding: 0.55rem 0.75rem;
+  background: rgba(7, 12, 26, 0.7);
   color: #f8fafc;
   outline: none;
+  font-size: 0.8rem;
+  transition: border-color 0.15s;
+}
+.directory-toolbar input:focus,
+.directory-toolbar select:focus {
+  border-color: rgba(108, 142, 255, 0.5);
+}
+.directory-toolbar input {
+  flex: 1;
+  min-width: 180px;
+}
+.directory-toolbar select {
+  min-width: 140px;
 }
 .directory-toolbar span {
-  color: #94a3b8;
-  font-size: 0.75rem;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .delivery-filter {
   margin-bottom: 1rem;
@@ -1203,5 +1239,522 @@ select option {
   }
   .demo-entry {
     margin-top: 2.7rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN PAGES – Dedicated role login with split layout
+   ═══════════════════════════════════════════════════════════ */
+
+.login-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  min-height: calc(100vh - 4rem);
+  max-height: calc(100vh - 4rem);
+  width: 100%;
+  max-width: 960px;
+  margin: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(24px);
+}
+
+.login-brand-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 2.25rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 12, 26, 0.9);
+  overflow-y: auto;
+}
+
+.login-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.25rem;
+  background: rgba(10, 16, 32, 0.7);
+  overflow-y: auto;
+}
+
+.login-form-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.login-field input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  padding: 0.8rem 0.95rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e5e7eb;
+  outline: none;
+  font-size: 0.88rem;
+  transition: border-color 0.15s;
+}
+
+.login-field input:focus {
+  border-color: rgba(108, 142, 255, 0.5);
+  background: rgba(108, 142, 255, 0.04);
+}
+
+.login-submit-btn {
+  width: 100%;
+  padding: 0.85rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-choice-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 880px);
+  padding: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  background: rgba(7, 12, 26, 0.85);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+}
+
+.login-role-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+}
+
+.login-role-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid;
+  border-radius: 14px;
+  padding: 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.login-role-card:hover {
+  transform: translateY(-3px);
+  background: rgba(20, 32, 60, 0.8);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIGNUP PAGES – Structured form for merchant / courier
+   ═══════════════════════════════════════════════════════════ */
+
+.signup-wrapper {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 780px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(7, 12, 26, 0.85);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+}
+
+.signup-header {
+  padding: 2rem 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.signup-form {
+  padding: 1.75rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.signup-fieldset {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.signup-legend {
+  padding: 0 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.signup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+}
+
+.signup-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.signup-label input,
+.signup-label select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e5e7eb;
+  outline: none;
+  font-size: 0.84rem;
+  transition: border-color 0.15s;
+}
+
+.signup-label input:focus,
+.signup-label select:focus {
+  border-color: rgba(108, 142, 255, 0.5);
+}
+
+.signup-label input[type="file"] {
+  padding: 0.55rem;
+  cursor: pointer;
+}
+
+.signup-footer {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-bottom: 0.5rem;
+}
+
+.signup-success {
+  padding: 3rem 2.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .login-layout {
+    grid-template-columns: 1fr;
+    border-radius: 14px;
+    min-height: auto;
+    max-height: none;
+    margin: 1rem;
+  }
+  .login-brand-panel {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.8rem;
+  }
+  .login-form-panel {
+    padding: 1.8rem;
+  }
+  .login-role-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .login-choice-card {
+    padding: 1.5rem;
+    border-radius: 14px;
+  }
+  .login-role-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .signup-grid {
+    grid-template-columns: 1fr;
+  }
+  .signup-header,
+  .signup-form {
+    padding: 1.4rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .login-role-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICATION CENTER
+═══════════════════════════════════════════════════════ */
+.notif-bell-wrap {
+  display: inline-block;
+}
+.notif-bell {
+  position: relative;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  transition: background 0.15s;
+  cursor: pointer;
+  color: inherit;
+}
+.notif-bell:hover {
+  background: rgba(255,255,255,0.1);
+}
+.notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #070c1a;
+  animation: badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes badge-pop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+.notif-panel {
+  animation: panel-slide 0.2s ease;
+}
+@keyframes panel-slide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Toasts flottants */
+.toast-stack {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  left: auto;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 320px;
+  pointer-events: none;
+}
+.toast-notif {
+  pointer-events: all;
+  animation: toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: rgba(13, 23, 43, 0.95);
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Sidebar bottom row */
+.sidebar-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.sidebar-bottom-row a {
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.7);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.sidebar-bottom-row a:hover {
+  color: #f8fafc;
+}
+
+/* ═══════════════════════════════════════════════════════
+   WORKFLOW LIVRAISON
+═══════════════════════════════════════════════════════ */
+.workflow-steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+}
+.workflow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  min-width: 60px;
+}
+.workflow-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 900;
+  border: 2px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: rgba(148,163,184,0.6);
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+.workflow-step.done .workflow-dot {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+}
+.workflow-step.active .workflow-dot {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  border-color: #6366f1;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); }
+  50%       { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.08); }
+}
+.workflow-label {
+  margin-top: 6px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-align: center;
+  color: rgba(148,163,184,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+  max-width: 56px;
+}
+.workflow-step.done .workflow-label,
+.workflow-step.active .workflow-label {
+  color: rgba(226,232,240,0.9);
+}
+.workflow-line {
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 14px);
+  right: calc(-50% + 14px);
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  z-index: 0;
+}
+.workflow-line.done {
+  background: #10b981;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD — STAT CLIQUABLE & COLONNES
+═══════════════════════════════════════════════════════ */
+.stat-link {
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  cursor: pointer;
+}
+.stat-link:hover {
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 24px rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+}
+
+.dashboard-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chart-panel {
+  padding: 1.25rem;
+}
+
+.chart-block {
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE NOTIFICATIONS
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .toast-stack {
+    left: auto;
+    right: 1rem;
+    max-width: 280px;
+    bottom: 1rem;
+  }
+  .notif-panel {
+    right: auto;
+    left: -8rem;
+    width: 280px;
   }
 }

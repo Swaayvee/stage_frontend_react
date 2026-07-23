@@ -5,7 +5,7 @@ import AppShell from "./AppShell";
 export default function AccountEditor() {
   const params = useSearchParams(),
     router = useRouter();
-  const role = ["merchant", "courier", "manager", "super-manager"].includes(
+  const role = ["merchant", "courier", "mgr-9a8f2k4x", "sm-3v8n1w9z"].includes(
     params.get("role"),
   )
     ? params.get("role")
@@ -13,8 +13,8 @@ export default function AccountEditor() {
   const profile = {
     merchant: ["Maison Olive", "contact@maisonolive.fr", "04 72 00 12 34"],
     courier: ["Lucas Martin", "lucas@exemple.fr", "06 12 34 56 78"],
-    manager: ["Sarah Bernard", "sarah.bernard@relayflow.fr", "06 41 20 86 12"],
-    "super-manager": [
+    "mgr-9a8f2k4x": ["Sarah Bernard", "sarah.bernard@relayflow.fr", "06 41 20 86 12"],
+    "sm-3v8n1w9z": [
       "Alexandre Dubois",
       "alexandre@relayflow.fr",
       "06 33 15 42 70",
@@ -29,7 +29,7 @@ export default function AccountEditor() {
           <p>Vos informations actuelles sont déjà renseignées.</p>
         </div>
         <button className="button" onClick={() => router.push(`/${role}`)}>
-          ← Retour au tableau de bord
+          Retour au tableau de bord
         </button>
       </header>
       <form

@@ -5,12 +5,6 @@ import { useState } from "react";
 const destinations = [
   ["Commerçant", "/merchant", "Créer, attribuer et suivre vos livraisons."],
   ["Livreur", "/courier", "Choisir et réaliser les livraisons disponibles."],
-  ["Manager", "/manager", "Étudier les adhésions et résoudre les incidents."],
-  [
-    "Super-manager",
-    "/super-manager",
-    "Vision globale, comptes managers et modération.",
-  ],
 ];
 
 export default function Home() {
@@ -23,7 +17,7 @@ export default function Home() {
         <span className="ambient-grid" />
       </div>
       <Link className="tracking-shortcut" href="/tracking/RF-2026-042">
-        Suivre une livraison ↗
+        Suivre une livraison
       </Link>
       <section className="hero">
         <p className="eyebrow">RELAYFLOW · LOGISTIQUE LOCALE</p>
@@ -45,8 +39,7 @@ export default function Home() {
           <button onClick={() => setDemoOpen(!demoOpen)}>
             {demoOpen
               ? "Fermer la démonstration"
-              : "Continuer la démonstration"}{" "}
-            <span>{demoOpen ? "↑" : "↓"}</span>
+              : "Continuer la démonstration"}
           </button>
           <p>Accès rapide aux interfaces de démonstration.</p>
         </div>
@@ -54,7 +47,6 @@ export default function Home() {
           <div className="role-grid">
             {destinations.map(([name, href, text]) => (
               <Link className="role-card" href={href} key={href}>
-                <span>→</span>
                 <h2>{name}</h2>
                 <p>{text}</p>
               </Link>

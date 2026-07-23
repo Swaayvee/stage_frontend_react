@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import NotificationCenter from "./NotificationCenter";
 
 const menus = {
   merchant: [
     ["Vue d'ensemble", "/merchant"],
     ["Nouvelle livraison", "/merchant/deliveries/new"],
-    ["Livraisons", "/merchant/deliveries"],
+    ["Mes livraisons", "/merchant/deliveries"],
+    ["Assigner un livreur", "/merchant/assign-courier"],
   ],
   courier: [
     ["Mon tableau", "/courier"],
@@ -14,29 +16,41 @@ const menus = {
     ["Mes livraisons", "/courier/deliveries"],
     ["Mon statut", "/courier/status"],
   ],
-  manager: [
-    ["Vue d'ensemble", "/manager"],
-    ["Demandes d'adhésion", "/manager/applications"],
-    ["Problèmes signalés", "/manager/issues"],
+  "mgr-9a8f2k4x": [
+    ["Vue d'ensemble", "/mgr-9a8f2k4x"],
+    ["Demandes d'adhésion", "/mgr-9a8f2k4x/applications"],
+    ["Commerçants", "/mgr-9a8f2k4x/merchants"],
+    ["Livreurs", "/mgr-9a8f2k4x/couriers"],
+    ["Problèmes signalés", "/mgr-9a8f2k4x/issues"],
   ],
-  "super-manager": [
-    ["Vue globale", "/super-manager"],
-    ["Managers", "/super-manager/managers"],
-    ["Commerçants", "/super-manager/merchants"],
-    ["Livreurs", "/super-manager/couriers"],
-    ["Livraisons", "/super-manager/deliveries"],
-    ["Incidents & bannissements", "/super-manager/issues"],
+  "sm-3v8n1w9z": [
+    ["Vue globale", "/sm-3v8n1w9z"],
+    ["Managers", "/sm-3v8n1w9z/managers"],
+    ["Commerçants", "/sm-3v8n1w9z/merchants"],
+    ["Livreurs", "/sm-3v8n1w9z/couriers"],
+    ["Livraisons", "/sm-3v8n1w9z/deliveries"],
+    ["Incidents & bannissements", "/sm-3v8n1w9z/issues"],
   ],
 };
+
 const labels = {
   merchant: "Commerçant",
   courier: "Livreur",
-  manager: "Manager",
-  "super-manager": "Super-manager",
+  "mgr-9a8f2k4x": "Manager",
+  "sm-3v8n1w9z": "Super-manager",
 };
+
+const names = {
+  merchant: "Maison Olive",
+  courier: "Lucas Martin",
+  "mgr-9a8f2k4x": "Sarah Bernard",
+  "sm-3v8n1w9z": "Alexandre Dubois",
+};
+
 export default function AppShell({ role, children }) {
-  const pathname = usePathname(),
-    items = menus[role];
+  const pathname = usePathname();
+  const items = menus[role] || [];
+
   return (
     <div className="app-shell">
       <div className="ambient-background">
@@ -51,30 +65,29 @@ export default function AppShell({ role, children }) {
         </Link>
         <p className="sidebar-role">ESPACE {labels[role].toUpperCase()}</p>
         <nav>
-          {items.map(([label, href]) => (
-            <Link
-              key={href}
-              href={href}
-              className={pathname === href ? "active" : ""}
-            >
-              {label}
-            </Link>
-          ))}
+          {items.map(([label, href]) => {
+            const hasExactMatch = items.some((i) => i[1] === pathname);
+            const isActive =
+              pathname === href ||
+              (!hasExactMatch &&
+                href !== `/${role}` &&
+                pathname.startsWith(href + "/"));
+            return (
+              <Link key={href} href={href} className={isActive ? "active" : ""}>
+                {label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="sidebar-footer">
           <Link className="profile-link" href={`/account?role=${role}`}>
-            <b>
-              {role === "merchant"
-                ? "Maison Olive"
-                : role === "courier"
-                  ? "Lucas Martin"
-                  : role === "manager"
-                    ? "Sarah Bernard"
-                    : "Alexandre Dubois"}
-            </b>
+            <b>{names[role]}</b>
             <small>{labels[role]} · Modifier mon compte</small>
           </Link>
-          <Link href="/login">Déconnexion</Link>
+          <div className="sidebar-bottom-row">
+            <NotificationCenter role={role} />
+            <Link href="/login">Déconnexion</Link>
+          </div>
         </div>
       </aside>
       <main className="content">
@@ -82,7 +95,10 @@ export default function AppShell({ role, children }) {
           <Link href="/" className="brand">
             Relay<span>Flow</span>
           </Link>
-          <span>{labels[role]}</span>
+          <div className="flex items-center gap-3">
+            <NotificationCenter role={role} />
+            <span>{labels[role]}</span>
+          </div>
         </div>
         {children}
       </main>
