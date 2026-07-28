@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 
 const DeliveryMap = dynamic(() => import("./DeliveryMap"), { ssr: false });
 
+import Finance from "./Finance";
+import TeamManager from "./TeamManager";
 import { getStatusColor } from "../lib/utils";
 import {
   directoryData,
@@ -60,6 +62,12 @@ function DeliveryModal({ delivery, role, assignMode: initialAssignMode, onClose 
   const [issueText, setIssueText] = useState("");
   const [issueSent, setIssueSent] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState(null);
+  // Confirmation sécurisée (livreur)
+  const [confirmMode, setConfirmMode] = useState(null); // null | "code" | "photo" | "fail"
+  const [confirmCode, setConfirmCode] = useState("");
+  const [failReason, setFailReason] = useState("");
+  const [photoUploaded, setPhotoUploaded] = useState(false);
+  const [confirmDone, setConfirmDone] = useState(false);
 
   if (!delivery) return null;
 
@@ -68,19 +76,19 @@ function DeliveryModal({ delivery, role, assignMode: initialAssignMode, onClose 
   const status = deliveryStatus || rawStatus;
   const color = getStatusColor(status);
   const canAssign = status === "À attribuer" || !courierName;
+  const isCourierDelivering = role === "courier" && (status === "Retrait confirmé" || status === "En livraison");
 
   // Actions contextuelles selon rôle et statut
   const getWorkflowAction = () => {
     if (role === "courier") {
       if (status === "Livreur assigné") return ["Confirmer le retrait chez le commerçant", () => setDeliveryStatus("Retrait confirmé"), "good"];
-      if (status === "Retrait confirmé") return ["Confirmer la livraison au client", () => setDeliveryStatus("Livrée"), "good"];
-      if (status === "En livraison") return ["Confirmer la livraison au client", () => setDeliveryStatus("Livrée"), "good"];
+      if (isCourierDelivering) return null; // handled by secure confirmation UI
     }
     if (role === "merchant") {
       if (status === "Créée" || status === "À attribuer") return ["Annuler la livraison", () => setDeliveryStatus("Annulée"), "danger"];
     }
-    if (role === "manager" || role === "super-manager") {
-      return null; // dropdown affichera les options
+    if (role === "manager" || role === "super_manager") {
+      return null;
     }
     return null;
   };
@@ -91,6 +99,19 @@ function DeliveryModal({ delivery, role, assignMode: initialAssignMode, onClose 
     if (!selectedCourier) return;
     setAssigned(true);
     setAssignMode(false);
+  };
+
+  const handleSecureConfirm = () => {
+    setDeliveryStatus("Livrée");
+    setConfirmDone(true);
+    setConfirmMode(null);
+  };
+
+  const handleFail = () => {
+    if (!failReason.trim()) return;
+    setDeliveryStatus("Échec de livraison");
+    setConfirmDone(true);
+    setConfirmMode(null);
   };
 
   return (
@@ -196,6 +217,87 @@ function DeliveryModal({ delivery, role, assignMode: initialAssignMode, onClose 
                 >
                   🗺️ Lancer la navigation Google Maps
                 </a>
+              </div>
+            )}
+
+            {/* Confirmation sécurisée livraison (livreur seulement) */}
+            {isCourierDelivering && !confirmDone && (
+              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-indigo-300">Confirmer la remise au client</p>
+                {confirmMode === null && (
+                  <div className="space-y-2">
+                    <button className="button small w-full bg-emerald-600/80 border-emerald-500 text-white" onClick={() => setConfirmMode("code")}>
+                      🔑 Saisir le code de livraison du client
+                    </button>
+                    <button className="button small w-full" onClick={() => setConfirmMode("photo")}>
+                      📷 Client injoignable — Prendre une photo justificative
+                    </button>
+                    <button className="button small w-full border-red-500/30 text-red-300 hover:bg-red-500/10" onClick={() => setConfirmMode("fail")}>
+                      ❌ Signaler un échec de livraison
+                    </button>
+                  </div>
+                )}
+                {confirmMode === "code" && (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-300">Code de livraison (communiqué au client)</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="ex: A3F7Z1"
+                      value={confirmCode}
+                      onChange={e => setConfirmCode(e.target.value.toUpperCase())}
+                      className="w-full text-center text-2xl font-black tracking-[0.3em] rounded-lg border border-white/15 bg-slate-950 py-2 text-white outline-none focus:border-indigo-400"
+                    />
+                    <div className="flex gap-2">
+                      <button className="small good flex-1" onClick={handleSecureConfirm} disabled={confirmCode.length < 4}>✓ Valider la remise</button>
+                      <button className="small" onClick={() => setConfirmMode(null)}>Annuler</button>
+                    </div>
+                  </div>
+                )}
+                {confirmMode === "photo" && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-400">Prenez une photo du colis devant la porte ou du lieu de dépôt.</p>
+                    {!photoUploaded ? (
+                      <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/20 bg-white/5 p-6 cursor-pointer hover:border-indigo-400/50 hover:bg-indigo-500/5 transition-all">
+                        <span className="text-3xl">📷</span>
+                        <span className="text-xs font-semibold text-slate-300">Cliquez pour sélectionner une photo</span>
+                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={() => setPhotoUploaded(true)} />
+                      </label>
+                    ) : (
+                      <p className="text-xs text-emerald-400 font-bold">✓ Photo ajoutée avec succès</p>
+                    )}
+                    <div className="flex gap-2">
+                      <button className="small good flex-1" onClick={handleSecureConfirm} disabled={!photoUploaded}>✓ Confirmer le dépôt</button>
+                      <button className="small" onClick={() => { setConfirmMode(null); setPhotoUploaded(false); }}>Annuler</button>
+                    </div>
+                  </div>
+                )}
+                {confirmMode === "fail" && (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-300">Motif de l'échec (obligatoire)</label>
+                    <select
+                      className="w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
+                      value={failReason}
+                      onChange={e => setFailReason(e.target.value)}
+                    >
+                      <option value="">— Sélectionner un motif —</option>
+                      <option value="Adresse introuvable">Adresse introuvable</option>
+                      <option value="Client absent après 3 tentatives">Client absent après 3 tentatives</option>
+                      <option value="Colis refusé par le client">Colis refusé par le client</option>
+                      <option value="Accès impossible">Accès impossible (interphone, code, gardien)</option>
+                      <option value="Problème de sécurité">Problème de sécurité sur place</option>
+                    </select>
+                    <div className="flex gap-2">
+                      <button className="small danger flex-1" onClick={handleFail} disabled={!failReason}>Confirmer l'échec</button>
+                      <button className="small" onClick={() => setConfirmMode(null)}>Annuler</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {confirmDone && (
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-emerald-400 font-bold text-sm">
+                ✓ {deliveryStatus} — Merci, le statut a été mis à jour.
               </div>
             )}
 
@@ -464,6 +566,102 @@ function Form({ type }) {
   );
 }
 
+/* ─────────────────────────── FORMULAIRE INVITATION (manager → vendeur/livreur) ─────────────────────────── */
+
+function InviteForm({ role }) {
+  const [inviteType, setInviteType] = useState("merchant");
+  const [sent, setSent] = useState(false);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex gap-2">
+        {[["merchant", "🏪 Inviter un Vendeur"], ["courier", "🚴 Inviter un Livreur"]].map(([val, label]) => (
+          <button
+            key={val}
+            type="button"
+            onClick={() => { setInviteType(val); setSent(false); }}
+            className={`flex-1 rounded-xl border py-2.5 text-sm font-bold transition ${
+              inviteType === val
+                ? "border-indigo-400 bg-indigo-500/20 text-indigo-100"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <form
+        className="form panel space-y-4"
+        onSubmit={e => { e.preventDefault(); setSent(true); }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label>
+            <span>Prénom et Nom</span>
+            <input type="text" required placeholder="Jean Dupont" />
+          </label>
+          <label>
+            <span>Adresse e-mail</span>
+            <input type="email" required placeholder="contact@exemple.fr" />
+          </label>
+          {inviteType === "merchant" && (
+            <>
+              <label>
+                <span>Nom du commerce</span>
+                <input type="text" required placeholder="Épicerie des Canuts" />
+              </label>
+              <label>
+                <span>Type de commerce</span>
+                <select>
+                  <option>Épicerie / Alimentation</option>
+                  <option>Restauration</option>
+                  <option>Mode & Accessoires</option>
+                  <option>Pharmacie / Santé</option>
+                  <option>Autre</option>
+                </select>
+              </label>
+            </>
+          )}
+          {inviteType === "courier" && (
+            <>
+              <label>
+                <span>Téléphone</span>
+                <input type="tel" required placeholder="06 12 34 56 78" />
+              </label>
+              <label>
+                <span>Type de véhicule</span>
+                <select>
+                  <option>Vélo classique</option>
+                  <option>Vélo électrique</option>
+                  <option>Scooter / Moto</option>
+                  <option>Voiture</option>
+                  <option>À pied (courte distance)</option>
+                </select>
+              </label>
+            </>
+          )}
+          <label className="md:col-span-2">
+            <span>Zone / Périmètre d'activité</span>
+            <input type="text" required placeholder="Lyon Centre, Villeurbanne…" />
+          </label>
+        </div>
+
+        <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 text-xs text-slate-300">
+          <span className="font-bold text-indigo-300 block mb-1">📧 Un lien d'invitation sera envoyé par e-mail</span>
+          La personne recevra un lien sécurisé pour finaliser son inscription et créer son mot de passe. Le lien expire dans 72h.
+        </div>
+
+        {sent && (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-emerald-400 font-bold text-sm">
+            ✓ Invitation envoyée ! {inviteType === "merchant" ? "Le vendeur" : "Le livreur"} recevra un e-mail sous peu.
+          </div>
+        )}
+        <button className="button w-full">Envoyer l'invitation</button>
+      </form>
+    </div>
+  );
+}
+
 /* ─────────────────────────── DIRECTORY (commerçants/livreurs/managers) ─────────────────────────── */
 
 function Directory({ type, role }) {
@@ -579,7 +777,7 @@ function Directory({ type, role }) {
   );
 }
 
-/* ─────────────────────────── MODAL UTILISATEUR (super-manager / manager) ─────────────────────────── */
+/* ─────────────────────────── MODAL UTILISATEUR (super_manager / manager) ─────────────────────────── */
 
 function UserDetailModal({ user, type, onClose }) {
   const isCourier = type === "couriers";
@@ -756,7 +954,7 @@ function UserDetailModal({ user, type, onClose }) {
           </div>
         </div>
 
-        {/* Actions super-manager */}
+        {/* Actions super_manager */}
         <div className="flex flex-wrap gap-2 border-t border-white/10 pt-4">
           <button className="small danger text-xs">Suspendre le compte</button>
           <button className="small text-xs">Contacter par e-mail</button>
@@ -1430,7 +1628,7 @@ function CourierStatus() {
 
 /* ─────────────────────────── DÉTAIL DOSSIER (application-detail / issue-detail) ─────────────────────────── */
 
-function Detail({ type, section }) {
+function Detail({ type, section, role }) {
   const [status, setStatus] = useState("");
 
   const candidateId = section ? section.replace("applications/", "").replace("issues/", "") : null;
@@ -1605,20 +1803,38 @@ function Detail({ type, section }) {
           </div>
         </div>
 
-        {/* Actions */}
+        {/* Actions selon le rôle */}
         <div className="flex flex-wrap gap-3 pt-4 border-t border-white/10">
-          <button className="small good" onClick={() => setStatus("Incident marqué comme résolu")}>✓ Marquer comme résolu</button>
-          <button className="small danger" onClick={() => setStatus("Compte concerné suspendu")}>Suspendre le compte</button>
-          <button className="small" onClick={() => setStatus("E-mail de contact envoyé")}>✉️ Contacter les parties</button>
+          {(role === "manager" || role === "super_manager") && (
+            <>
+              <button className="small good" onClick={() => setStatus("Incident marqué comme résolu")}>✓ Marquer comme résolu</button>
+              <button className="small danger" onClick={() => setStatus("Compte concerné suspendu")}>Suspendre le compte</button>
+              <button className="small" onClick={() => setStatus("E-mail de contact envoyé")}>✉️ Contacter les parties</button>
+            </>
+          )}
+          {role === "manager" && (
+            <button
+              className="small border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
+              onClick={() => setStatus("⬆️ Incident escaladé au Super Gestionnaire")}
+            >
+              ⬆️ Escalader au Super Gestionnaire
+            </button>
+          )}
+          {role === "super_manager" && (
+            <>
+              <button className="small good" onClick={() => setStatus("✓ Arbitrage final : Incident définitivement résolu")}>⚖️ Résoudre définitivement</button>
+              <button className="small danger" onClick={() => setStatus("✕ Arbitrage final : Demande rejetée")}>✕ Rejeter la plainte</button>
+            </>
+          )}
         </div>
 
         {status && (
           <div className={`p-3 rounded-xl border text-sm font-bold flex items-center gap-2 ${
-            status.includes('résolu') ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-            : status.includes('suspendu') ? 'bg-red-500/10 border-red-500/20 text-red-400'
-            : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+            status.includes('résolu') || status.includes('Résolu') ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            : status.includes('suspendu') || status.includes('rejetée') ? 'bg-red-500/10 border-red-500/20 text-red-400'
+            : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
           }`}>
-            ✓ {status}
+            {status}
           </div>
         )}
       </div>
@@ -1832,19 +2048,25 @@ const pages = {
   "merchant/deliveries/new": ["Nouvelle livraison", "Créez une livraison et choisissez le livreur.", "delivery"],
   "merchant/deliveries": ["Mes livraisons", "Suivez et gérez vos expéditions.", "table"],
   "merchant/assign-courier": ["Choisir un livreur", "Sélectionnez un livreur pour votre livraison.", "assign-courier"],
+  "merchant/team": ["Mon équipe de livreurs", "Gérez vos partenariats réguliers avec des livreurs attitrés.", "team"],
+  "merchant/finance": ["Finances & Factures", "Consultez vos factures et gérez vos paiements.", "finance"],
   "courier/available": ["Livraisons disponibles", "Recherchez plus ou moins loin de votre zone, puis triez les opportunités.", "available"],
   "courier/deliveries": ["Mes livraisons", "Confirmez le retrait, utilisez la localisation et finalisez la remise.", "mine"],
   "courier/status": ["Mon statut de livreur", "Votre disponibilité détermine les livraisons proposées.", "status"],
+  "courier/finance": ["Mes gains & Paiements", "Consultez vos bons de paiement et votre solde.", "finance"],
   "manager/applications": ["Demandes d'adhésion", "Étudiez les demandes des commerçants et livreurs.", "applications"],
   "manager/issues": ["Problèmes signalés", "Suivez les incidents de livraison et leurs résolutions.", "issues"],
   "manager/merchants": ["Commerçants partenaires", "Consultez et gérez les commerçants de votre périmètre.", "merchants"],
   "manager/couriers": ["Livreurs vérifiés", "Consultez et gérez les livreurs de votre périmètre.", "couriers"],
-  "super-manager/managers": ["Tous les managers", "Créez, recherchez et administrez les comptes managers.", "managers"],
-  "super-manager/managers/create": ["Créer un manager", "Créez un compte manager avec un mot de passe temporaire.", "manager"],
-  "super-manager/merchants": ["Tous les commerçants", "Cliquez sur un commerçant pour voir ses statistiques complètes.", "merchants"],
-  "super-manager/couriers": ["Tous les livreurs", "Cliquez sur un livreur pour voir ses statistiques complètes.", "couriers"],
-  "super-manager/deliveries": ["Toutes les livraisons", "Vision complète du flux de livraison.", "table"],
-  "super-manager/issues": ["Incidents & bannissements", "Résolvez les incidents et suspendez les comptes si nécessaire.", "issues"],
+  "manager/finance": ["Gestion Financière", "Générez les factures, bons de paiement et supervisez les impayés.", "finance"],
+  "manager/invite": ["Inviter un utilisateur", "Envoyez une invitation à un vendeur ou un livreur pour rejoindre votre zone.", "invite"],
+  "super_manager/managers": ["Tous les managers", "Créez, recherchez et administrez les comptes managers.", "managers"],
+  "super_manager/managers/create": ["Créer un manager", "Créez un compte manager avec un mot de passe temporaire.", "manager"],
+  "super_manager/merchants": ["Tous les commerçants", "Cliquez sur un commerçant pour voir ses statistiques complètes.", "merchants"],
+  "super_manager/couriers": ["Tous les livreurs", "Cliquez sur un livreur pour voir ses statistiques complètes.", "couriers"],
+  "super_manager/deliveries": ["Toutes les livraisons", "Vision complète du flux de livraison.", "table"],
+  "super_manager/issues": ["Incidents & bannissements", "Résolvez les incidents, escaladez ou arbitrez définitivement.", "issues"],
+  "super_manager/finance": ["Supervision Financière", "Consultez les flux financiers de l'ensemble du réseau.", "finance"],
 };
 
 /* ─────────────────────────── EXPORT PRINCIPAL ─────────────────────────── */
@@ -1898,7 +2120,7 @@ export default function WorkspacePage({ role, section }) {
           <p>{desc}</p>
         </div>
         {type === "managers" ? (
-          <Link href="/super-manager/managers/create" className="button">Créer un manager</Link>
+          <Link href="/super_manager/managers/create" className="button">Créer un manager</Link>
         ) : (
           !["delivery", "assign-courier"].includes(type) && (
             <Link href={`/${role}`} className="button">Tableau de bord</Link>
@@ -1908,6 +2130,12 @@ export default function WorkspacePage({ role, section }) {
 
       {["delivery", "manager"].includes(type) ? (
         <Form type={type} />
+      ) : type === "invite" ? (
+        <InviteForm role={role} />
+      ) : type === "finance" ? (
+        <Finance role={role} />
+      ) : type === "team" ? (
+        <TeamManager />
       ) : type === "assign-courier" ? (
         <AssignCourier />
       ) : type === "status" ? (
@@ -1921,7 +2149,7 @@ export default function WorkspacePage({ role, section }) {
       ) : ["issues", "mine"].includes(type) ? (
         <Cards type={type} role={role} />
       ) : ["application-detail", "issue-detail"].includes(type) ? (
-        <Detail type={type} section={section} />
+        <Detail type={type} section={section} role={role} />
       ) : (
         <GenericTable role={role} />
       )}

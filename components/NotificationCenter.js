@@ -14,15 +14,15 @@ const notifTemplates = {
     { id: "n5", icon: "✅", title: "Livraison confirmée", body: "LIV-2026-040 livrée avec succès au client", type: "success", href: "/merchant/deliveries" },
     { id: "n6", icon: "⚠️", title: "Livraison sans livreur", body: "LIV-2026-038 attend une attribution depuis 45 min", type: "warning", href: "/merchant/assign-courier" },
   ],
-  "mgr-9a8f2k4x": [
-    { id: "n7", icon: "📋", title: "Nouvelle demande d'adhésion", body: "Boulangerie Félix — dossier complet à étudier", type: "info", href: "/mgr-9a8f2k4x/applications" },
-    { id: "n8", icon: "🔴", title: "Incident signalé", body: "INC-043 · Colis non remis · Maison Olive", type: "urgent", href: "/mgr-9a8f2k4x/issues" },
-    { id: "n9", icon: "📋", title: "Demande livreur reçue", body: "Antoine Graux — vélo cargo · Lyon 6e", type: "info", href: "/mgr-9a8f2k4x/applications" },
+  "manager": [
+    { id: "n7", icon: "📋", title: "Nouvelle demande d'adhésion", body: "Boulangerie Félix — dossier complet à étudier", type: "info", href: "/manager/applications" },
+    { id: "n8", icon: "🔴", title: "Incident signalé", body: "INC-043 · Colis non remis · Maison Olive", type: "urgent", href: "/manager/issues" },
+    { id: "n9", icon: "📋", title: "Demande livreur reçue", body: "Antoine Graux — vélo cargo · Lyon 6e", type: "info", href: "/manager/applications" },
   ],
-  "sm-3v8n1w9z": [
-    { id: "n10", icon: "🔴", title: "Incident critique réseau", body: "INC-044 · Livreur injoignable · 2 livraisons bloquées", type: "urgent", href: "/sm-3v8n1w9z/issues" },
-    { id: "n11", icon: "📊", title: "Rapport hebdomadaire prêt", body: "214 livraisons cette semaine · +8% vs semaine passée", type: "info", href: "/sm-3v8n1w9z/deliveries" },
-    { id: "n12", icon: "⚠️", title: "Compte signalé", body: "LIV-144 · Inès Laurent · 3 incidents ce mois", type: "warning", href: "/sm-3v8n1w9z/couriers" },
+  "super_manager": [
+    { id: "n10", icon: "🔴", title: "Incident critique réseau", body: "INC-044 · Livreur injoignable · 2 livraisons bloquées", type: "urgent", href: "/super_manager/issues" },
+    { id: "n11", icon: "📊", title: "Rapport hebdomadaire prêt", body: "214 livraisons cette semaine · +8% vs semaine passée", type: "info", href: "/super_manager/deliveries" },
+    { id: "n12", icon: "⚠️", title: "Compte signalé", body: "LIV-144 · Inès Laurent · 3 incidents ce mois", type: "warning", href: "/super_manager/couriers" },
   ],
 };
 

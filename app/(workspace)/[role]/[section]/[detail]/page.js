@@ -1,7 +1,7 @@
 import AppShell from "../../../../../components/AppShell";
 import WorkspacePage from "../../../../../components/WorkspacePage";
 import { notFound } from "next/navigation";
-const roles = ["merchant", "courier", "mgr-9a8f2k4x", "sm-3v8n1w9z"];
+const roles = ["merchant", "courier", "manager", "super_manager"];
 export default async function DetailPage({ params }) {
   const { role, section, detail } = await params;
   if (!roles.includes(role)) notFound();

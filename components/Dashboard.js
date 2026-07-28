@@ -18,7 +18,8 @@ const content = {
     actions: [
       ["Créer une livraison", "/merchant/deliveries/new"],
       ["Mes livraisons", "/merchant/deliveries"],
-      ["Assigner un livreur", "/merchant/assign-courier"],
+      ["Mon équipe de livreurs", "/merchant/team"],
+      ["Mes finances", "/merchant/finance"],
     ],
     recentActivityTitle: "Vos commandes & livraisons",
     recentActivityDesc: "Dernières commandes et livraisons de votre boutique",
@@ -35,12 +36,13 @@ const content = {
       ["2", "À réaliser", "blue", "/courier/deliveries"],
       ["6", "Disponibles", "indigo", "/courier/available"],
       ["4.9 / 5", "Votre note", "amber", "/courier/deliveries"],
-      ["24 €", "Gains aujourd'hui", "purple", "/courier/deliveries"],
+      ["24 €", "Gains aujourd'hui", "purple", "/courier/finance"],
     ],
     actions: [
       ["Voir les livraisons disponibles", "/courier/available"],
       ["Gérer mon statut", "/courier/status"],
       ["Mes livraisons", "/courier/deliveries"],
+      ["Mes bons de paiement", "/courier/finance"],
     ],
     recentActivityTitle: "Vos livraisons en cours & à réaliser",
     recentActivityDesc: "Livraisons attribuées et étapes à confirmer",
@@ -48,21 +50,22 @@ const content = {
     chartLabel: "Livraisons réalisées / mois",
     donut: { value: 98, label: "Réussies", color: "#10b981" },
   },
-  "mgr-9a8f2k4x": {
+  manager: {
     label: "Manager",
     sub: "Gérez les validations et supervisez les problèmes.",
-    primary: ["Étudier les adhésions", "/mgr-9a8f2k4x/applications"],
+    primary: ["Inviter un utilisateur", "/manager/invite"],
     stats: [
-      ["12", "Demandes à étudier", "amber", "/mgr-9a8f2k4x/applications"],
-      ["4", "Problèmes ouverts", "red", "/mgr-9a8f2k4x/issues"],
-      ["48", "Commerçants actifs", "emerald", "/mgr-9a8f2k4x/merchants"],
-      ["73", "Livreurs vérifiés", "indigo", "/mgr-9a8f2k4x/couriers"],
+      ["12", "Demandes à étudier", "amber", "/manager/applications"],
+      ["4", "Problèmes ouverts", "red", "/manager/issues"],
+      ["48", "Commerçants actifs", "emerald", "/manager/merchants"],
+      ["73", "Livreurs vérifiés", "indigo", "/manager/couriers"],
     ],
     actions: [
-      ["Étudier les adhésions", "/mgr-9a8f2k4x/applications"],
-      ["Commerçants actifs", "/mgr-9a8f2k4x/merchants"],
-      ["Livreurs vérifiés", "/mgr-9a8f2k4x/couriers"],
-      ["Traiter les problèmes", "/mgr-9a8f2k4x/issues"],
+      ["Inviter Vendeur/Livreur", "/manager/invite"],
+      ["Commerçants actifs", "/manager/merchants"],
+      ["Livreurs vérifiés", "/manager/couriers"],
+      ["Traiter les problèmes", "/manager/issues"],
+      ["Facturation & Finances", "/manager/finance"],
     ],
     recentActivityTitle: "Activité récente & Incidents majeurs",
     recentActivityDesc: "Dernières livraisons sensibles et incidents signalés",
@@ -72,22 +75,22 @@ const content = {
     barLabels: ["Commerçants", "Livreurs"],
     chartDataB: [4, 7, 5, 9, 6, 9],
   },
-  "sm-3v8n1w9z": {
+  super_manager: {
     label: "Super-manager",
     sub: "Pilotez l'ensemble du réseau RelayFlow, les commerçants, livreurs et managers.",
-    primary: ["Créer un manager", "/sm-3v8n1w9z/managers"],
+    primary: ["Créer un manager", "/super_manager/managers"],
     stats: [
-      ["126", "Commerçants", "emerald", "/sm-3v8n1w9z/merchants"],
-      ["214", "Livreurs", "indigo", "/sm-3v8n1w9z/couriers"],
-      ["18", "Livraisons actives", "blue", "/sm-3v8n1w9z/deliveries"],
-      ["5", "Incidents ouverts", "red", "/sm-3v8n1w9z/issues"],
+      ["126", "Commerçants", "emerald", "/super_manager/merchants"],
+      ["214", "Livreurs", "indigo", "/super_manager/couriers"],
+      ["18", "Livraisons actives", "blue", "/super_manager/deliveries"],
+      ["5", "Incidents ouverts", "red", "/super_manager/issues"],
     ],
     actions: [
-      ["Créer un manager", "/sm-3v8n1w9z/managers"],
-      ["Toutes les livraisons", "/sm-3v8n1w9z/deliveries"],
-      ["Tous les commerçants", "/sm-3v8n1w9z/merchants"],
-      ["Tous les livreurs", "/sm-3v8n1w9z/couriers"],
-      ["Gérer les incidents", "/sm-3v8n1w9z/issues"],
+      ["Créer un manager", "/super_manager/managers"],
+      ["Tous les commerçants", "/super_manager/merchants"],
+      ["Tous les livreurs", "/super_manager/couriers"],
+      ["Gérer les incidents", "/super_manager/issues"],
+      ["Superviser les finances", "/super_manager/finance"],
     ],
     recentActivityTitle: "Flux réseau & Actions système",
     recentActivityDesc: "Alertes majeures, bannissements récents et livraisons clés",
@@ -113,7 +116,7 @@ const deliveriesByRole = {
     ["INC-039", "Retard signalé", "Atelier Nami · 38 min de retard", "En cours", "amber", "Inès Laurent"],
     ["LIV-2026-042", "Livraison prioritaire", "Lyon 2e · Maison Olive", "En livraison", "blue", "Maya Richard"],
   ],
-  "super-manager": [
+  "super_manager": [
     ["BAN-012", "Livreur suspendu", "Infractions multiples · Marc Leroy", "Suspendu", "red", "Marc Leroy"],
     ["INC-042", "Incident actif", "Maison Olive · 14 Rue Victor Hugo", "Urgent", "red", "Maya Richard"],
     ["LIV-2026-050", "Maison Olive", "Villeurbanne · Grand Large", "En livraison", "blue", "Karim Diallo"],
@@ -330,7 +333,7 @@ export default function Dashboard({ role }) {
           </div>
           <div className="mt-4 w-full overflow-x-auto">
             <div className="grid min-w-155 grid-cols-[1.1fr_1.2fr_1fr_auto] gap-3 border-t border-white/10 py-3 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-slate-500">
-              <span className="text-start">{role === "manager" || role === "super-manager" ? "Réf." : "Référence"}</span>
+              <span className="text-start">{role === "manager" || role === "super_manager" ? "Réf." : "Référence"}</span>
               <span className="text-start">{role === "courier" ? "Commerçant" : role === "manager" ? "Titre" : "Commerçant"}</span>
               <span className="text-start">Destination / Info</span>
               <span className="text-end">Statut</span>

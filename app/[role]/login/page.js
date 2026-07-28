@@ -38,7 +38,7 @@ const roleConfig = {
     demoUser: "nora.petit@email.fr",
     demoPass: "••••••••••",
   },
-  "mgr-9a8f2k4x": {
+  "manager": {
     roleId: "manager",
     label: "Manager",
     eyebrow: "ESPACE MANAGER",
@@ -49,14 +49,14 @@ const roleConfig = {
     accentText: "text-blue-300",
     accentBg: "bg-blue-500/15",
     accentShadow: "shadow-blue-900/20",
-    redirect: "/mgr-9a8f2k4x",
+    redirect: "/manager",
     desc: "Espace de connexion réservé aux personnes habilitées.",
     canRegister: false,
     demoUser: "sarah.bernard@relayflow.fr",
     demoPass: "••••••••••",
   },
-  "sm-3v8n1w9z": {
-    roleId: "super-manager",
+  "super_manager": {
+    roleId: "super_manager",
     label: "Super-Manager",
     eyebrow: "ESPACE INTERNE",
     icon: "⚙️",
@@ -66,7 +66,7 @@ const roleConfig = {
     accentText: "text-indigo-300",
     accentBg: "bg-indigo-500/15",
     accentShadow: "shadow-indigo-900/20",
-    redirect: "/sm-3v8n1w9z",
+    redirect: "/super_manager",
     desc: "Connexion sécurisée à l'espace interne RelayFlow.",
     canRegister: false,
     demoUser: "admin@relayflow.fr",

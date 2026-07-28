@@ -5,7 +5,7 @@ import AppShell from "./AppShell";
 export default function AccountEditor() {
   const params = useSearchParams(),
     router = useRouter();
-  const role = ["merchant", "courier", "mgr-9a8f2k4x", "sm-3v8n1w9z"].includes(
+  const role = ["merchant", "courier", "manager", "super_manager"].includes(
     params.get("role"),
   )
     ? params.get("role")
@@ -13,8 +13,8 @@ export default function AccountEditor() {
   const profile = {
     merchant: ["Maison Olive", "contact@maisonolive.fr", "04 72 00 12 34"],
     courier: ["Lucas Martin", "lucas@exemple.fr", "06 12 34 56 78"],
-    "mgr-9a8f2k4x": ["Sarah Bernard", "sarah.bernard@relayflow.fr", "06 41 20 86 12"],
-    "sm-3v8n1w9z": [
+    "manager": ["Sarah Bernard", "sarah.bernard@relayflow.fr", "06 41 20 86 12"],
+    "super_manager": [
       "Alexandre Dubois",
       "alexandre@relayflow.fr",
       "06 33 15 42 70",

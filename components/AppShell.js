@@ -9,42 +9,47 @@ const menus = {
     ["Nouvelle livraison", "/merchant/deliveries/new"],
     ["Mes livraisons", "/merchant/deliveries"],
     ["Assigner un livreur", "/merchant/assign-courier"],
+    ["Mon équipe", "/merchant/team"],
+    ["Finances & Factures", "/merchant/finance"],
   ],
   courier: [
     ["Mon tableau", "/courier"],
     ["Livraisons disponibles", "/courier/available"],
     ["Mes livraisons", "/courier/deliveries"],
     ["Mon statut", "/courier/status"],
+    ["Mes gains", "/courier/finance"],
   ],
-  "mgr-9a8f2k4x": [
-    ["Vue d'ensemble", "/mgr-9a8f2k4x"],
-    ["Demandes d'adhésion", "/mgr-9a8f2k4x/applications"],
-    ["Commerçants", "/mgr-9a8f2k4x/merchants"],
-    ["Livreurs", "/mgr-9a8f2k4x/couriers"],
-    ["Problèmes signalés", "/mgr-9a8f2k4x/issues"],
+  manager: [
+    ["Vue d'ensemble", "/manager"],
+    ["Demandes d'adhésion", "/manager/applications"],
+    ["Commerçants", "/manager/merchants"],
+    ["Livreurs", "/manager/couriers"],
+    ["Problèmes signalés", "/manager/issues"],
+    ["Finances & Facturation", "/manager/finance"],
   ],
-  "sm-3v8n1w9z": [
-    ["Vue globale", "/sm-3v8n1w9z"],
-    ["Managers", "/sm-3v8n1w9z/managers"],
-    ["Commerçants", "/sm-3v8n1w9z/merchants"],
-    ["Livreurs", "/sm-3v8n1w9z/couriers"],
-    ["Livraisons", "/sm-3v8n1w9z/deliveries"],
-    ["Incidents & bannissements", "/sm-3v8n1w9z/issues"],
+  super_manager: [
+    ["Vue globale", "/super_manager"],
+    ["Managers", "/super_manager/managers"],
+    ["Commerçants", "/super_manager/merchants"],
+    ["Livreurs", "/super_manager/couriers"],
+    ["Livraisons", "/super_manager/deliveries"],
+    ["Incidents & bannissements", "/super_manager/issues"],
+    ["Finances globales", "/super_manager/finance"],
   ],
 };
 
 const labels = {
   merchant: "Commerçant",
   courier: "Livreur",
-  "mgr-9a8f2k4x": "Manager",
-  "sm-3v8n1w9z": "Super-manager",
+  "manager": "Manager",
+  "super_manager": "Super-manager",
 };
 
 const names = {
   merchant: "Maison Olive",
   courier: "Lucas Martin",
-  "mgr-9a8f2k4x": "Sarah Bernard",
-  "sm-3v8n1w9z": "Alexandre Dubois",
+  "manager": "Sarah Bernard",
+  "super_manager": "Alexandre Dubois",
 };
 
 export default function AppShell({ role, children }) {

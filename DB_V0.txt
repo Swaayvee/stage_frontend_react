@@ -1,0 +1,170 @@
+// Modèle de données MongoDB pour RelayFlow (Vendeurs, Livreurs, Gestionnaires, Super Gestionnaires)
+// Format : Base orientée documents avec références et intégrations (sous-documents)
+
+// 1. COMPTES (Point d'entrée unique pour tous les rôles)
+// Collection : comptes
+{
+  _id: ObjectId,
+  email: String, // unique
+  motDePasseHash: String,
+  role: 'vendeur' | 'livreur' | 'gestionnaire' | 'super_gestionnaire',
+  statutCompte: 'invite' | 'actif' | 'suspendu',
+  invitationToken: String,
+  invitationExpiration: Date,
+  dateCreation: Date,
+  derniereConnexion: Date
+}
+
+// 2. VENDEURS
+// Collection : vendeurs
+{
+  _id: ObjectId,
+  compteId: ObjectId, // référence -> comptes
+  raisonSociale: String,
+  telephone: String,
+  adresse: String,
+  ville: String,
+  departement: String,
+  dateCreation: Date
+}
+
+// 3. LIVREURS
+// Collection : livreurs
+{
+  _id: ObjectId,
+  compteId: ObjectId, // référence -> comptes
+  nom: String,
+  adresse: String,
+  ville: String,
+  departement: String,
+  typeVehicule: String,
+  statutOperationnel: 'disponible' | 'en_pause' | 'hors_service' | 'autre'
+}
+
+// 4. GESTIONNAIRES
+// Collection : gestionnaires
+{
+  _id: ObjectId,
+  compteId: ObjectId, // référence -> comptes
+  juridiction: {
+    niveau: 'ville' | 'departement' | 'pays',
+    valeur: String // absent si niveau = 'pays'
+  },
+  invitePar: ObjectId // référence -> comptes (Super Gestionnaire)
+}
+
+// 5. PARTENARIATS (Relation d'équipe entre un vendeur et un livreur)
+// Collection : partenariats
+{
+  _id: ObjectId,
+  vendeurId: ObjectId, // référence -> vendeurs
+  livreurId: ObjectId, // référence -> livreurs
+  statut: 'en_attente' | 'actif' | 'revoque' | 'rejete',
+  dateCreation: Date
+}
+
+// 6. LIVRAISONS
+// Collection : livraisons
+{
+  _id: ObjectId,
+  numeroSuivi: String, // unique
+  vendeurId: ObjectId, // référence -> vendeurs
+  modePriseEnCharge: 'propre' | 'equipe' | 'pool_plateforme',
+  livreurId: ObjectId, // défini une fois acceptée, référence -> livreurs
+  client: { // sous-document intégré
+    nom: String,
+    prenom: String,
+    telephone: String
+  },
+  nomLivreurTexte: String, // pertinent seulement en livraison propre (texte libre)
+  descriptionContenu: String,
+  statut: 'SOUMISE' | 'ACCEPTEE' | 'REFUSEE' | 'RETIREE' | 'LIVREE' | 'ECHOUEE',
+  dateSoumission: Date,
+  dateReceptionPrevue: Date,
+  codeLivraison: String,
+  urlPreuve: String,
+  motifEchec: String,
+  tentatives: Number,
+  historique: [ // tableau de sous-documents intégrés
+    {
+      ancienStatut: String,
+      nouveauStatut: String,
+      parQui: ObjectId, // référence -> comptes
+      quand: Date,
+      commentaire: String
+    }
+  ]
+}
+
+// 7. SIGNALEMENTS ET LITIGES
+// Collection : signalements
+{
+  _id: ObjectId,
+  type: 'probleme_retrait' | 'probleme_remise' | 'probleme_paiement' | 'autre',
+  livraisonId: ObjectId, // référence -> livraisons (absent pour un litige financier)
+  auteurId: ObjectId, // référence -> comptes
+  gestionnaireAssigneId: ObjectId, // référence -> gestionnaires
+  description: String,
+  statut: 'ouvert' | 'en_traitement' | 'escalade' | 'resolu' | 'rejete',
+  commentaireResolution: String,
+  dateCreation: Date,
+  dateResolution: Date
+}
+
+// 8. NOTIFICATIONS
+// Collection : notifications
+{
+  _id: ObjectId,
+  compteId: ObjectId, // référence -> comptes
+  type: 'maj_etat_livraison' | 'message_recu' | 'urgence',
+  titre: String,
+  contenu: String,
+  lienRessource: String,
+  lu: Boolean,
+  dateEnvoi: Date
+}
+
+// 9. ABONNEMENTS (Vendeur)
+// Collection : abonnements
+{
+  _id: ObjectId,
+  vendeurId: ObjectId, // référence -> vendeurs
+  montantMensuel: Number, // ex: 19.90
+  statut: 'actif' | 'expire' | 'suspendu',
+  dateDebut: Date,
+  dateFin: Date
+}
+
+// 10. FACTURES (Vendeur)
+// Collection : factures
+{
+  _id: ObjectId,
+  vendeurId: ObjectId, // référence -> vendeurs
+  periodeDebut: Date,
+  periodeFin: Date,
+  montant: Number,
+  statut: 'emise' | 'payee' | 'en_litige',
+  dateEmission: Date
+}
+
+// 11. BONS DE PAIEMENT (Livreur)
+// Collection : bonsPaiement
+{
+  _id: ObjectId,
+  livreurId: ObjectId, // référence -> livreurs
+  periodeDebut: Date,
+  periodeFin: Date,
+  nombreLivraisonsTraitees: Number,
+  tarifUnitaire: Number, // ex: 1.50
+  montantTotal: Number,
+  statut: 'emis' | 'paye',
+  dateEmission: Date
+}
+
+// 12. PUSH SUBSCRIPTIONS (Notifications Web)
+// Collection : pushSubscriptions
+{
+  _id: ObjectId,
+  compteId: ObjectId, // référence -> comptes
+  abonnementNavigateur: Object
+}
