@@ -2,34 +2,14 @@ import Link from "next/link";
 
 const profiles = [
   {
-    title: "Commerçant physique",
-    href: "/signup/merchant?type=physical",
-    desc: "Boutique, magasin ou point de vente fixe avec espace d'accueil du public.",
+    title: "Commerçant",
+    href: "/signup/merchant",
+    desc: "Commerce physique, boutique en ligne ou activité itinérante. Vous préciserez votre type à l’étape suivante.",
     icon: "🏪",
     accentBg: "bg-emerald-500/10",
     accentBorder: "border-emerald-500/25",
     accentText: "text-emerald-300",
-    docs: ["Extrait KBIS", "Bail commercial / Local", "RIB Professionnel"],
-  },
-  {
-    title: "E-commerçant",
-    href: "/signup/merchant?type=ecommerce",
-    desc: "Activité de vente en ligne avec atelier ou entrepôt d'expédition.",
-    icon: "🌐",
-    accentBg: "bg-teal-500/10",
-    accentBorder: "border-teal-500/25",
-    accentText: "text-teal-300",
-    docs: ["Extrait KBIS", "URL du site Web", "RIB Professionnel"],
-  },
-  {
-    title: "Commerçant mobile",
-    href: "/signup/merchant?type=mobile",
-    desc: "Commerce itinérant : marchés, Food-truck, remorque ou pop-up mobile.",
-    icon: "🚚",
-    accentBg: "bg-amber-500/10",
-    accentBorder: "border-amber-500/25",
-    accentText: "text-amber-300",
-    docs: ["Extrait KBIS", "Carte commerçant ambulant", "Carte grise véhicule"],
+    docs: ["Extrait KBIS", "Justificatifs liés à l’activité", "RIB professionnel"],
   },
   {
     title: "Livreur",

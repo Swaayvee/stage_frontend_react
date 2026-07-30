@@ -2,28 +2,34 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import NotificationCenter from "./NotificationCenter";
+import { useRelayFlowOptional } from "../context/RelayFlowProvider";
 
 const menus = {
   merchant: [
     ["Vue d'ensemble", "/merchant"],
     ["Nouvelle livraison", "/merchant/deliveries/new"],
     ["Mes livraisons", "/merchant/deliveries"],
-    ["Assigner un livreur", "/merchant/assign-courier"],
+    ["Attribuer les livraisons", "/merchant/assign-courier"],
     ["Mon équipe", "/merchant/team"],
+    ["Messages & problèmes", "/merchant/messages"],
     ["Finances & Factures", "/merchant/finance"],
   ],
   courier: [
     ["Mon tableau", "/courier"],
     ["Livraisons disponibles", "/courier/available"],
     ["Mes livraisons", "/courier/deliveries"],
+    ["Mes partenariats", "/courier/partnerships"],
+    ["Messages & problèmes", "/courier/messages"],
     ["Mon statut", "/courier/status"],
     ["Mes gains", "/courier/finance"],
   ],
   manager: [
     ["Vue d'ensemble", "/manager"],
+    ["Créer un utilisateur", "/manager/invite"],
     ["Demandes d'adhésion", "/manager/applications"],
     ["Commerçants", "/manager/merchants"],
     ["Livreurs", "/manager/couriers"],
+    ["Livraisons", "/manager/deliveries"],
     ["Problèmes signalés", "/manager/issues"],
     ["Finances & Facturation", "/manager/finance"],
   ],
@@ -42,18 +48,20 @@ const labels = {
   merchant: "Commerçant",
   courier: "Livreur",
   "manager": "Manager",
-  "super_manager": "Super-manager",
+  "super_manager": "Super Manager",
 };
 
-const names = {
+const fallbackNames = {
   merchant: "Maison Olive",
   courier: "Lucas Martin",
-  "manager": "Sarah Bernard",
-  "super_manager": "Alexandre Dubois",
+  manager: "Sarah Bernard",
+  super_manager: "Super Manager",
 };
 
 export default function AppShell({ role, children }) {
   const pathname = usePathname();
+  const ctx = useRelayFlowOptional();
+  const displayName = ctx?.displayName || fallbackNames[role];
   const items = menus[role] || [];
 
   return (
@@ -86,12 +94,17 @@ export default function AppShell({ role, children }) {
         </nav>
         <div className="sidebar-footer">
           <Link className="profile-link" href={`/account?role=${role}`}>
-            <b>{names[role]}</b>
+            <b>{displayName}</b>
             <small>{labels[role]} · Modifier mon compte</small>
           </Link>
           <div className="sidebar-bottom-row">
             <NotificationCenter role={role} />
-            <Link href="/login">Déconnexion</Link>
+            <Link
+              href="/login"
+              onClick={() => ctx?.api?.logout?.()}
+            >
+              Déconnexion
+            </Link>
           </div>
         </div>
       </aside>
@@ -105,7 +118,9 @@ export default function AppShell({ role, children }) {
             <span>{labels[role]}</span>
           </div>
         </div>
-        {children}
+        <div key={pathname} className="route-transition">
+          {children}
+        </div>
       </main>
     </div>
   );

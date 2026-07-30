@@ -1,152 +1,154 @@
 "use client";
 import Link from "next/link";
-import { use, useState } from "react";
+import { use, useMemo, useState } from "react";
+import { useRelayFlow } from "../../../context/RelayFlowProvider";
+import { inJurisdiction, STATUT_LIVRAISON_LABEL } from "../../../lib/domain";
+
+const STEPS = ["Soumise", "Acceptée", "Retirée", "Livrée"];
+
+function stepIndex(statut) {
+  const map = { SOUMISE: 0, ACCEPTEE: 1, RETIREE: 2, LIVREE: 3, ECHOUEE: 0, REFUSEE: 0 };
+  return map[statut] ?? 0;
+}
 
 export default function Tracking({ params }) {
-  const [location, setLocation] = useState(false);
-  const [showIssueModal, setShowIssueModal] = useState(false);
-  const [issueType, setIssueType] = useState("retard");
-  const [issueDetails, setIssueDetails] = useState("");
-  const [issueSubmitted, setIssueSubmitted] = useState(false);
-
   const { reference } = use(params);
+  const { state, api, session } = useRelayFlow();
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [ratingFeedback, setRatingFeedback] = useState("");
 
-  const handleSubmitIssue = (e) => {
-    e.preventDefault();
-    setIssueSubmitted(true);
-    setTimeout(() => {
-      setShowIssueModal(false);
-      setIssueSubmitted(false);
-      setIssueDetails("");
-    }, 2500);
-  };
+  const livraison = useMemo(() => {
+    return state?.livraisons?.find((delivery) => {
+      const publicMatch =
+        delivery.suiviPublic === true &&
+        delivery.publicTrackingToken?.toLowerCase() === reference.toLowerCase();
+      const manager = state?.gestionnaires?.find(
+        (item) => item.compteId === session?.compteId
+      );
+      const seller = state?.vendeurs?.find((item) => item._id === delivery.vendeurId);
+      const privileged =
+        session?.role === "super_manager" ||
+        (session?.role === "manager" && inJurisdiction(seller, manager?.juridiction));
+      const internalMatch =
+        privileged && delivery.numeroSuivi.toLowerCase() === reference.toLowerCase();
+      return publicMatch || internalMatch;
+    });
+  }, [state, reference, session]);
+
+  if (!livraison) {
+    return (
+      <main className="tracking">
+        <div className="ambient-background" />
+        <div className="tracking-card tracking-card--empty">
+          <div className="tracking-empty__top">
+            <Link href="/" className="brand">Relay<span>Flow</span></Link>
+            <span className="tracking-empty__status">Lien indisponible</span>
+          </div>
+          <div className="tracking-empty__content">
+            <p className="tracking-empty__eyebrow">Suivi de livraison</p>
+            <h1>Livraison introuvable</h1>
+            <p className="tracking-copy">
+              Ce lien de suivi est incorrect, incomplet ou n’a pas été activé par le commerçant.
+            </p>
+            <p className="tracking-empty__notice">
+              Vérifiez le lien reçu ou demandez au commerçant de vous envoyer un nouveau lien public.
+            </p>
+            <Link href="/" className="button">Retour à l’accueil</Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const livreur = state?.livreurs?.find((l) => l._id === livraison.livreurId);
+  const vendeur = state?.vendeurs?.find((v) => v._id === livraison.vendeurId);
+  const current = stepIndex(livraison.statut);
+  const label = STATUT_LIVRAISON_LABEL[livraison.statut] || livraison.statut;
 
   return (
     <main className="tracking">
       <div className="ambient-background" />
       <div className="tracking-card">
-        <Link href="/" className="brand">
-          Relay<span>Flow</span>
-        </Link>
-        <p className="eyebrow">SUIVI PUBLIC · {reference}</p>
-        <h1>Votre livraison est en route</h1>
+        <Link href="/" className="brand">Relay<span>Flow</span></Link>
+        <p className="eyebrow">SUIVI PUBLIC · {livraison.numeroSuivi}</p>
+        <h1>{label}</h1>
         <p className="tracking-copy">
-          Votre colis a été récupéré par Lucas Martin. Il vous contactera par
-          SMS ou appel avant son arrivée.
+          {livreur
+            ? `Prise en charge par ${livreur.nom}.`
+            : livraison.modePriseEnCharge === "propre"
+              ? `Livraison assurée par ${livraison.nomLivreurTexte || vendeur?.raisonSociale || "le vendeur"}.`
+              : "En attente d'un livreur disponible dans la zone."}
         </p>
         <div className="progress">
-          <i />
-          <i />
-          <i className="pending" />
+          {STEPS.map((_, i) => (
+            <i key={i} className={i <= current ? "" : "pending"} />
+          ))}
         </div>
         <div className="tracking-steps">
-          <span>Colis préparé</span>
-          <span>Récupéré</span>
-          <span>En livraison</span>
-          <span>Livré</span>
+          {STEPS.map((s) => <span key={s}>{s}</span>)}
         </div>
-        <div className="map">
-          <span>Position du livreur</span>
-          <b>●</b>
-          <small>
-            {location
-              ? "Position partagée · mise à jour il y a 2 min"
-              : "La localisation n’est pas encore partagée par le livreur."}
-          </small>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm space-y-2 mt-4">
+          <p><strong>Client :</strong> {livraison.client?.prenom} {livraison.client?.nom}</p>
+          <p><strong>Adresse :</strong> {livraison.client?.adresse || livraison.villeLivraison}</p>
+          <p><strong>Commerçant :</strong> {vendeur?.raisonSociale || "—"}</p>
+          {livraison.descriptionContenu && <p><strong>Contenu :</strong> {livraison.descriptionContenu}</p>}
         </div>
-
-        <div className="flex flex-wrap gap-2 mt-4">
-          <button onClick={() => setLocation(!location)} className="small">
-            {location
-              ? "Masquer la simulation"
-              : "Simuler la localisation du livreur"}
-          </button>
-          <button
-            onClick={() => setShowIssueModal(true)}
-            className="small danger"
-          >
-            Signaler un problème
-          </button>
-        </div>
-
-        <div className="contact mt-6">
-          <b>Une question ?</b>
-          <p>
-            Le livreur vous contacte par le canal choisi par le commerçant :
-            SMS, appel ou messagerie.
-          </p>
-        </div>
-
-        {showIssueModal && (
-          <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm flex items-center justify-center"
-            role="dialog"
-            aria-modal="true"
-            onClick={() => setShowIssueModal(false)}
-          >
-            <div
-              className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#0d172b] p-6 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h2 className="text-xl font-bold text-white mb-2">Signaler un problème sur votre livraison</h2>
-              <p className="text-xs text-slate-400 mb-4">
-                Référence : <span className="font-mono text-indigo-300">{reference}</span>
-              </p>
-
-              {issueSubmitted ? (
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/15 p-4 text-center">
-                  <p className="text-sm font-bold text-emerald-300">✓ Signalement enregistré avec succès.</p>
-                  <p className="text-xs text-slate-300 mt-1">Notre équipe manager et le livreur ont été notifiés.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmitIssue} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                      Type de problème
-                    </label>
-                    <select
-                      value={issueType}
-                      onChange={(e) => setIssueType(e.target.value)}
-                      className="w-full rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
-                    >
-                      <option value="retard">Retard important de livraison</option>
-                      <option value="absent">Le livreur indique être passé mais j'étais présent</option>
-                      <option value="injoignable">Livreur injoignable par téléphone</option>
-                      <option value="endommage">Colis ou contenu endommagé</option>
-                      <option value="autre">Autre motif</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                      Explications complémentaires
-                    </label>
-                    <textarea
-                      required
-                      value={issueDetails}
-                      onChange={(e) => setIssueDetails(e.target.value)}
-                      placeholder="Décrivez précisément votre problème…"
-                      rows={4}
-                      className="w-full rounded-lg border border-white/15 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-indigo-400"
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <button type="submit" className="small good flex-1">
-                      Envoyer le signalement
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowIssueModal(false)}
-                      className="small"
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
+        {livreur?.coordonnees && (
+          <div className="map mt-4">
+            <span>Position du livreur (approximative)</span>
+            <small>Lat {livreur.coordonnees.lat?.toFixed(4)}, Lng {livreur.coordonnees.lng?.toFixed(4)}</small>
           </div>
+        )}
+        {livraison.statut === "LIVREE" && livreur && (
+          <section className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+            <h2 className="m-0 text-base font-black text-white">Noter la livraison</h2>
+            <p className="mt-1 text-xs text-slate-400">Votre avis concerne le livreur {livreur.nom}.</p>
+            <div className="my-3 flex gap-2" aria-label="Note sur cinq">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`h-9 w-9 rounded-lg border text-sm font-black ${
+                    value <= rating
+                      ? "border-amber-400/40 bg-amber-400/15 text-amber-300"
+                      : "border-white/10 bg-white/5 text-slate-500"
+                  }`}
+                  onClick={() => setRating(value)}
+                  aria-label={`${value} sur 5`}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              maxLength={500}
+              rows={3}
+              required
+              placeholder="Votre avis (obligatoire)"
+              className="w-full rounded-lg border border-white/10 bg-slate-950/70 p-3 text-sm text-white outline-none focus:border-indigo-400"
+            />
+            <button
+              type="button"
+              className="button mt-3"
+              disabled={!rating || comment.trim().length < 3}
+              onClick={() => {
+                const result = api.submitEvaluation({
+                  livraisonId: livraison._id,
+                  numeroSuivi: livraison.numeroSuivi,
+                  auteurType: "client",
+                  note: rating,
+                  commentaire: comment,
+                });
+                setRatingFeedback(result.ok ? "Merci, votre avis a été enregistré." : result.error);
+              }}
+            >
+              Envoyer l’avis
+            </button>
+            {ratingFeedback && <p className="mt-3 text-xs font-bold text-indigo-200">{ratingFeedback}</p>}
+          </section>
         )}
       </div>
     </main>

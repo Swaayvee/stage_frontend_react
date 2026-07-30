@@ -1,14 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
-
-const destinations = [
-  ["Commerçant", "/merchant", "Créer, attribuer et suivre vos livraisons."],
-  ["Livreur", "/courier", "Choisir et réaliser les livraisons disponibles."],
-];
 
 export default function Home() {
-  const [demoOpen, setDemoOpen] = useState(false);
   return (
     <main className="landing">
       <div className="ambient-background">
@@ -16,9 +9,6 @@ export default function Home() {
         <span className="ambient-orb ambient-orb-two" />
         <span className="ambient-grid" />
       </div>
-      <Link className="tracking-shortcut" href="/tracking/RF-2026-042">
-        Suivre une livraison
-      </Link>
       <section className="hero">
         <p className="eyebrow">RELAYFLOW · LOGISTIQUE LOCALE</p>
         <h1>
@@ -35,24 +25,6 @@ export default function Home() {
           <Link href="/login">Se connecter</Link>
           <Link href="/signup">S’inscrire</Link>
         </div>
-        <div className="demo-entry">
-          <button onClick={() => setDemoOpen(!demoOpen)}>
-            {demoOpen
-              ? "Fermer la démonstration"
-              : "Continuer la démonstration"}
-          </button>
-          <p>Accès rapide aux interfaces de démonstration.</p>
-        </div>
-        {demoOpen && (
-          <div className="role-grid">
-            {destinations.map(([name, href, text]) => (
-              <Link className="role-card" href={href} key={href}>
-                <h2>{name}</h2>
-                <p>{text}</p>
-              </Link>
-            ))}
-          </div>
-        )}
       </section>
     </main>
   );

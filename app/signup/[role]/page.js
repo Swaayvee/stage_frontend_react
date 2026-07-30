@@ -1,7 +1,10 @@
 "use client";
 import Link from "next/link";
 import { use, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRelayFlow } from "../../../context/RelayFlowProvider";
+import FrenchLocationFields from "../../../components/FrenchLocationFields";
+import { formatFrenchPhone } from "../../../lib/location";
 
 const specs = {
   merchant: {
@@ -13,7 +16,7 @@ const specs = {
     accentBorder: "border-emerald-500/25",
     accentText: "text-emerald-300",
     gradient: "from-emerald-600/10 to-transparent",
-    redirect: "/login/merchant",
+    redirect: "/merchant/login",
   },
   courier: {
     title: "Devenir livreur RelayFlow",
@@ -24,7 +27,7 @@ const specs = {
     accentBorder: "border-purple-500/25",
     accentText: "text-purple-300",
     gradient: "from-purple-600/10 to-transparent",
-    redirect: "/login/courier",
+    redirect: "/courier/login",
     fileLabel: "Pièce d'identité (CNI ou passeport, PDF ou image)",
   },
 };
@@ -101,14 +104,13 @@ function MerchantForm({ merchantType, setMerchantType }) {
           <fieldset className="signup-fieldset">
             <legend className="signup-legend">Point de vente & Contact</legend>
             <div className="signup-grid">
-              <label className="signup-label">
-                <span>Adresse exacte du magasin <span className="text-red-400">*</span></span>
-                <input required placeholder="14 Rue Victor Hugo" />
-              </label>
-              <label className="signup-label">
-                <span>Code postal & Ville <span className="text-red-400">*</span></span>
-                <input required placeholder="69002 Lyon" />
-              </label>
+              <FrenchLocationFields
+                addressName="adressePointVente"
+                cityName="villePointVente"
+                departmentName="departementPointVente"
+                postalCodeName="codePostalPointVente"
+                addressLabel="Adresse exacte du magasin"
+              />
               <label className="signup-label">
                 <span>E-mail professionnel <span className="text-red-400">*</span></span>
                 <input required type="email" placeholder="contact@maisonolive.fr" />
@@ -172,14 +174,13 @@ function MerchantForm({ merchantType, setMerchantType }) {
           <fieldset className="signup-fieldset">
             <legend className="signup-legend">Atelier / Entrepôt de préparation (Lieu de collecte)</legend>
             <div className="signup-grid">
-              <label className="signup-label">
-                <span>Adresse de l'entrepôt ou atelier <span className="text-red-400">*</span></span>
-                <input required placeholder="12 Rue Garibaldi" />
-              </label>
-              <label className="signup-label">
-                <span>Code postal & Ville <span className="text-red-400">*</span></span>
-                <input required placeholder="69007 Lyon" />
-              </label>
+              <FrenchLocationFields
+                addressName="adresseEntrepot"
+                cityName="villeEntrepot"
+                departmentName="departementEntrepot"
+                postalCodeName="codePostalEntrepot"
+                addressLabel="Adresse de l'entrepôt ou atelier"
+              />
               <label className="signup-label">
                 <span>E-mail service expéditions <span className="text-red-400">*</span></span>
                 <input required type="email" placeholder="expeditions@atelier-nami.fr" />
@@ -262,10 +263,12 @@ function MerchantForm({ merchantType, setMerchantType }) {
                 <span>Marchés & Zones de présence habituelles <span className="text-red-400">*</span></span>
                 <input required placeholder="Ex. Marché Croix-Rousse (Mar/Ven), Place Bellecour (Mer/Sam)" />
               </label>
-              <label className="signup-label">
-                <span>Ville de rattachement / Dépôt <span className="text-red-400">*</span></span>
-                <input required placeholder="Ex. Lyon 4e" />
-              </label>
+              <FrenchLocationFields
+                showAddress={false}
+                cityName="villeRattachement"
+                departmentName="departementRattachement"
+                postalCodeName="codePostalRattachement"
+              />
             </div>
           </fieldset>
 
@@ -295,20 +298,8 @@ function CourierForm() {
   return (
     <>
       <fieldset className="signup-fieldset">
-        <legend className="signup-legend">Informations personnelles</legend>
+        <legend className="signup-legend">Zone d'activité</legend>
         <div className="signup-grid">
-          <label className="signup-label">
-            <span>Prénom et nom <span className="text-red-400">*</span></span>
-            <input required placeholder="Prénom Nom" />
-          </label>
-          <label className="signup-label">
-            <span>E-mail <span className="text-red-400">*</span></span>
-            <input required type="email" placeholder="votre@email.fr" />
-          </label>
-          <label className="signup-label">
-            <span>Téléphone <span className="text-red-400">*</span></span>
-            <input required type="tel" placeholder="06 XX XX XX XX" />
-          </label>
           <label className="signup-label">
             <span>Zone de livraison <span className="text-red-400">*</span></span>
             <input required placeholder="Ex. Lyon 3e et 7e" />
@@ -321,7 +312,7 @@ function CourierForm() {
         <div className="signup-grid">
           <label className="signup-label">
             <span>Type de véhicule <span className="text-red-400">*</span></span>
-            <select required value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
+            <select name="typeVehicule" required value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
               <option value="" disabled>Choisir un moyen de transport</option>
               <option value="bike">Vélo / vélo électrique</option>
               <option value="scooter">Scooter / moto</option>
@@ -371,20 +362,62 @@ function CourierForm() {
 }
 
 function SignupContent({ role, spec }) {
+  const { api } = useRelayFlow();
   const [done, setDone] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const searchParams = useSearchParams();
   const initialType = searchParams ? searchParams.get("type") : null;
   const [merchantType, setMerchantType] = useState(
     ["physical", "ecommerce", "mobile"].includes(initialType) ? initialType : "physical"
   );
-  const router = useRouter();
+  const handleFormInput = (event) => {
+    if (event.target instanceof HTMLInputElement && event.target.type === "tel") {
+      event.target.value = formatFrenchPhone(event.target.value);
+      const valid = event.target.value.replace(/\D/g, "").length === 10;
+      event.target.setCustomValidity(valid ? "" : "Saisissez un numéro français de 10 chiffres.");
+    }
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
+    if (!e.currentTarget.checkValidity()) {
+      e.currentTarget.reportValidity();
+      return;
+    }
+    const data = new FormData(e.currentTarget);
+    const profil = {};
+    e.currentTarget.querySelectorAll("input, select, textarea").forEach((field, index) => {
+      if (field.type === "password" || field.type === "file") return;
+      const label = field.closest("label")?.querySelector("span")?.textContent?.trim();
+      const key = field.name || label || `champ_${index + 1}`;
+      if (field.value) profil[key] = field.value;
+    });
+    const documents = [...e.currentTarget.querySelectorAll('input[type="file"]')]
+      .flatMap((field) => [...(field.files || [])])
+      .map((file) => ({ nom: file.name, type: file.type, taille: file.size }));
+    const result = await api.submitApplication({
+      role: role === "merchant" ? "vendeur" : "livreur",
+      email: data.get("email"),
+      telephone: data.get("telephone"),
+      ville: data.get("ville"),
+      departement: data.get("departement"),
+      codeCommune: data.get("codeCommune"),
+      codeDepartement: data.get("codeDepartement"),
+      codePostal: data.get("codePostal"),
+      nom: data.get("displayName"),
+      raisonSociale: role === "merchant" ? data.get("displayName") : "",
+      adresse: data.get("adresse"),
+      typeVehicule: data.get("typeVehicule"),
+      password: data.get("password"),
+      profil,
+      documents,
+    });
+    if (!result.ok) {
+      setSubmitError(result.error);
+      return;
+    }
     setDone(true);
-    setTimeout(() => {
-      router.push(`/login/${role}`);
-    }, 3500);
   };
 
   const merchantFileLabel =
@@ -435,13 +468,37 @@ function SignupContent({ role, spec }) {
             Votre dossier a bien été reçu. Un manager RelayFlow l'examinera et vous contactera
             sous <strong className="text-white">2 à 5 jours ouvrés</strong>.
           </p>
-          <p className="text-xs text-slate-500">Redirection vers la page de connexion…</p>
-          <Link href={`/login/${role}`} className={`mt-4 inline-flex items-center gap-2 rounded-lg border ${spec.accentBorder} ${spec.accentBg} px-4 py-2 text-sm font-bold ${spec.accentText}`}>
+          <p className="text-xs text-slate-500">
+            Votre accès sera activé dès que la demande aura été acceptée.
+          </p>
+          <Link href={`/${role}/login`} className={`mt-4 inline-flex items-center gap-2 rounded-lg border ${spec.accentBorder} ${spec.accentBg} px-4 py-2 text-sm font-bold ${spec.accentText}`}>
             Aller à la connexion
           </Link>
         </div>
       ) : (
-        <form className="signup-form" onSubmit={handleSubmit} noValidate>
+        <form className="signup-form" onSubmit={handleSubmit} onInput={handleFormInput}>
+          <fieldset className="signup-fieldset">
+            <legend className="signup-legend">Identité, localisation et accès</legend>
+            <div className="signup-grid">
+              <label className="signup-label">
+                <span>{role === "merchant" ? "Nom commercial" : "Prénom et nom"} <span className="text-red-400">*</span></span>
+                <input name="displayName" required minLength={2} maxLength={100} autoComplete="name" />
+              </label>
+              <label className="signup-label">
+                <span>E-mail <span className="text-red-400">*</span></span>
+                <input name="email" required type="email" maxLength={254} autoComplete="email" />
+              </label>
+              <label className="signup-label">
+                <span>Téléphone <span className="text-red-400">*</span></span>
+                <input name="telephone" required type="tel" inputMode="numeric" placeholder="06 12 34 56 78" autoComplete="tel" />
+              </label>
+              <FrenchLocationFields />
+              <label className="signup-label">
+                <span>Mot de passe souhaité <span className="text-red-400">*</span></span>
+                <input name="password" required type="password" minLength={10} maxLength={128} autoComplete="new-password" />
+              </label>
+            </div>
+          </fieldset>
           {role === "courier" ? (
             <CourierForm />
           ) : (
@@ -460,6 +517,7 @@ function SignupContent({ role, spec }) {
           </fieldset>
 
           <div className="signup-footer">
+            {submitError && <p className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm font-bold text-red-300">{submitError}</p>}
             <p className="text-xs text-slate-500 leading-relaxed">
               En soumettant ce formulaire, vous acceptez que vos données soient traitées par RelayFlow
               dans le cadre de l'étude de votre demande d'adhésion.
@@ -474,7 +532,7 @@ function SignupContent({ role, spec }) {
             </div>
             <p className="text-xs text-slate-600 mt-2">
               Déjà un compte ?{" "}
-              <Link href={`/login/${role}`} className={`font-bold ${spec.accentText}`}>
+              <Link href={`/${role}/login`} className={`font-bold ${spec.accentText}`}>
                 Se connecter
               </Link>
             </p>

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
+import { useRelayFlow } from "../../../context/RelayFlowProvider";
 
 const roleConfig = {
   merchant: {
@@ -18,8 +19,6 @@ const roleConfig = {
     desc: "Gérez vos expéditions, commandes et livraisons.",
     canRegister: true,
     registerHref: "/signup/merchant",
-    demoUser: "commerce@maisonolive.fr",
-    demoPass: "••••••••••",
   },
   courier: {
     label: "Livreur",
@@ -35,8 +34,6 @@ const roleConfig = {
     desc: "Consultez les livraisons disponibles et gérez vos courses.",
     canRegister: true,
     registerHref: "/signup/courier",
-    demoUser: "nora.petit@email.fr",
-    demoPass: "••••••••••",
   },
   "manager": {
     roleId: "manager",
@@ -52,12 +49,10 @@ const roleConfig = {
     redirect: "/manager",
     desc: "Espace de connexion réservé aux personnes habilitées.",
     canRegister: false,
-    demoUser: "sarah.bernard@relayflow.fr",
-    demoPass: "••••••••••",
   },
-  "super_manager": {
+  "super-manager": {
     roleId: "super_manager",
-    label: "Super-Manager",
+    label: "Super Manager",
     eyebrow: "ESPACE INTERNE",
     icon: "⚙️",
     color: "indigo",
@@ -69,8 +64,6 @@ const roleConfig = {
     redirect: "/super_manager",
     desc: "Connexion sécurisée à l'espace interne RelayFlow.",
     canRegister: false,
-    demoUser: "admin@relayflow.fr",
-    demoPass: "••••••••••",
   },
 };
 
@@ -78,6 +71,7 @@ export default function LoginPage({ params }) {
   const role = use(params).role;
   const config = roleConfig[role];
   const router = useRouter();
+  const { api } = useRelayFlow();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -96,7 +90,7 @@ export default function LoginPage({ params }) {
     );
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (!email.trim() || !password.trim()) {
@@ -104,27 +98,45 @@ export default function LoginPage({ params }) {
       return;
     }
     setLoading(true);
-
-    // Simulation de connexion (remplacer par une vraie API)
-    setTimeout(() => {
-      // Stocker le rôle et l'utilisateur en session
-      if (typeof window !== "undefined") {
-        const actualRole = config.roleId || role;
-        localStorage.setItem("auth_role", actualRole);
-        localStorage.setItem("auth_user", JSON.stringify({ email, role: actualRole, name: getNameFromEmail(email, config.label) }));
+    const actualRole = config.roleId || role;
+    const loginOnServer = () => fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, routeRole: actualRole }),
+    }).catch(() => null);
+    let serverResponse = await loginOnServer();
+    if (!serverResponse?.ok) {
+      const legacyResult = api.login(email, password, actualRole);
+      if (legacyResult.ok && ["vendeur", "livreur"].includes(legacyResult.session.role)) {
+        const syncResponse = await fetch("/api/auth/dev-sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            accountId: legacyResult.session.compteId,
+            email,
+            password,
+            role: legacyResult.session.role,
+          }),
+        }).catch(() => null);
+        if (syncResponse?.ok) serverResponse = await loginOnServer();
       }
-      router.push(config.redirect);
-    }, 900);
-  };
-
-  const handleDemo = () => {
-    setLoading(true);
-    if (typeof window !== "undefined") {
-      const actualRole = config.roleId || role;
-      localStorage.setItem("auth_role", actualRole);
-      localStorage.setItem("auth_user", JSON.stringify({ email: config.demoUser, role: actualRole, name: `Demo ${config.label}` }));
     }
-    setTimeout(() => router.push(config.redirect), 600);
+    const serverResult = serverResponse ? await serverResponse.json().catch(() => ({})) : {};
+    if (!serverResponse?.ok) {
+      api.logout();
+      setLoading(false);
+      setError(serverResult.error || "Connexion sécurisée indisponible.");
+      return;
+    }
+    const localSession = api.establishSession(serverResult.accountId, actualRole);
+    if (!localSession.ok) {
+      api.logout();
+      setLoading(false);
+      setError(localSession.error);
+      return;
+    }
+    setLoading(false);
+    router.push(config.redirect);
   };
 
   return (
@@ -215,14 +227,6 @@ export default function LoginPage({ params }) {
                 )}
               </button>
               
-              <button
-                type="button"
-                onClick={handleDemo}
-                disabled={loading}
-                className={`w-full py-4 rounded-2xl border border-white/5 bg-white/[0.02] text-sm font-bold text-slate-300 hover:bg-white/[0.06] hover:text-white transition-all text-center focus:outline-none focus:ring-4 focus:ring-white/10`}
-              >
-                Accéder à la démo
-              </button>
             </div>
 
             {config.canRegister && (
@@ -236,13 +240,6 @@ export default function LoginPage({ params }) {
               </div>
             )}
           </form>
-        </div>
-
-        {/* Footer Link */}
-        <div className="mt-10">
-          <Link href="/login" className="flex items-center justify-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-300 transition-colors bg-white/5 hover:bg-white/10 px-6 py-3 rounded-full border border-white/5 backdrop-blur-md">
-            <span>←</span> Retour au choix d'espace
-          </Link>
         </div>
       </section>
     </main>
