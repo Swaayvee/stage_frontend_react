@@ -14,6 +14,30 @@ import { displayNameForCompte } from "../lib/store";
 
 const RelayFlowContext = createContext(null);
 
+const CENTRAL_ACTIONS = new Set([
+  "createLivraison", "assignCourier", "decideDeliveryCandidate", "createSignalement",
+  "sendIssueMessage", "markIssueMessagesRead", "submitEvaluation", "submitSellerEvaluation",
+  "proposerPartenariat", "revoquerPartenariat", "acceptOffer", "refuseOffer", "confirmRetrait",
+  "confirmLivraison", "markEchec", "setStatutOperationnel", "accepterPartenariat",
+  "rejeterPartenariat", "updateProfile", "updateLivreurCoords", "stopLivreurLocationSharing",
+  "updateLivreurPreferences", "traiterSignalement", "suspendreCompte", "reactiverCompte",
+  "inviterGestionnaire", "genererFacture", "genererBonPaiement", "marquerFacturePayee",
+  "marquerBonPaye", "markNotificationRead", "markAllNotificationsRead",
+]);
+
+async function synchronizeBusinessState() {
+  const role = store.getSession()?.role;
+  if (!role) return { ok: false, error: "Session locale absente." };
+  const response = await fetch("/api/data/state", {
+    cache: "no-store",
+    headers: { "X-RelayFlow-Role": role },
+  }).catch(() => null);
+  const payload = response ? await response.json().catch(() => null) : null;
+  if (!response?.ok || !payload?.state)
+    return { ok: false, error: payload?.error || "Données MongoDB indisponibles." };
+  return store.replaceStateFromServer(payload.state);
+}
+
 export function RelayFlowProvider({ children }) {
   const [state, setState] = useState(null);
   const [session, setSession] = useState(null);
@@ -22,8 +46,8 @@ export function RelayFlowProvider({ children }) {
   useEffect(() => {
     store.loadState();
     setState(store.getState());
-    setSession(store.getSession());
-    setReady(true);
+    const initialSession = store.getSession();
+    setSession(initialSession);
     const unsubscribe = store.subscribe((s) => setState({ ...s }));
     const synchronizeFromStorage = (event) => {
       if (event.key && !event.key.startsWith("relayflow_")) return;
@@ -32,19 +56,73 @@ export function RelayFlowProvider({ children }) {
       setSession(store.getSession());
     };
     window.addEventListener("storage", synchronizeFromStorage);
+    let active = true;
+    (async () => {
+      if (initialSession) {
+        const result = await synchronizeBusinessState();
+        if (!result.ok && active) {
+          store.logout();
+          setSession(null);
+        }
+      }
+      if (active) setReady(true);
+    })();
     return () => {
+      active = false;
       unsubscribe();
       window.removeEventListener("storage", synchronizeFromStorage);
     };
   }, []);
+
+  useEffect(() => {
+    if (!ready || !session) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible") synchronizeBusinessState();
+    };
+    const interval = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [ready, session?.compteId]);
 
   const refreshSession = useCallback(() => {
     setSession(store.getSession());
   }, []);
 
   const api = useMemo(
-    () => ({
-      ...store.actions,
+    () => {
+      const centralizedActions = Object.fromEntries(Object.entries(store.actions).map(([name, action]) => [
+        name,
+        (...args) => {
+          const result = action(...args);
+          if (CENTRAL_ACTIONS.has(name) && result?.ok !== false) {
+            fetch("/api/data/command", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-RelayFlow-Role": store.getSession()?.role || "",
+              },
+              body: JSON.stringify({ action: name, args }),
+            })
+              .then(async (response) => {
+                if (!response.ok) {
+                  await synchronizeBusinessState();
+                  return null;
+                }
+                return response.json();
+              })
+              .then((payload) => { if (payload?.state) store.replaceStateFromServer(payload.state); })
+              .catch(() => { synchronizeBusinessState(); });
+          }
+          return result;
+        },
+      ]));
+      return ({
+      ...centralizedActions,
       submitApplication: async (payload) => {
         const result = store.submitApplication(payload);
         if (!result.ok) return result;
@@ -62,6 +140,8 @@ export function RelayFlowProvider({ children }) {
             email: payload.email,
             password: payload.password,
             assignedManagerAccountIds,
+            managerIds: result.application.managerIds,
+            profile: payload,
           }),
         }).catch(() => null);
         if (!response?.ok) {
@@ -94,6 +174,8 @@ export function RelayFlowProvider({ children }) {
             email: payload.email,
             password: payload.password,
             assignedManagerAccountIds,
+            managerIds: result.application.managerIds,
+            profile: payload,
           }),
         }).catch(() => null);
         if (!registrationResponse?.ok) {
@@ -119,63 +201,30 @@ export function RelayFlowProvider({ children }) {
             error: error?.error || "Le compte a été enregistré mais son activation a échoué.",
           };
         }
-        return store.decideApplication(
-          managerCompteId,
-          result.application._id,
-          "acceptee",
-          "Compte créé et validé directement par le manager."
-        );
+        const synchronized = await synchronizeBusinessState();
+        return synchronized.ok ? { ok: true } : synchronized;
       },
       decideApplication: async (managerCompteId, applicationId, decision, commentaire = "") => {
         const sendDecision = () => fetch("/api/registration-applications", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ applicationId, decision }),
+          body: JSON.stringify({ applicationId, decision, commentaire }),
         }).catch(() => null);
-        let response = await sendDecision();
-        if (response?.status === 409) {
-          const currentState = store.getState();
-          const application = currentState.applications.find((item) => item._id === applicationId);
-          const account = currentState.comptes.find((item) => item._id === application?.compteId);
-          if (application && account?.motDePasseHash) {
-            const assignedManagerAccountIds = application.managerIds
-              .map((managerId) => currentState.gestionnaires.find((item) => item._id === managerId)?.compteId)
-              .filter(Boolean);
-            const registrationResponse = await fetch("/api/registration-applications", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                applicationId,
-                accountId: application.compteId,
-                routeRole: application.role === "vendeur" ? "merchant" : "courier",
-                email: application.email,
-                password: account.motDePasseHash,
-                assignedManagerAccountIds,
-              }),
-            }).catch(() => null);
-            if (registrationResponse?.ok) response = await sendDecision();
-          }
-        }
+        const response = await sendDecision();
         if (!response?.ok) {
           const error = await response?.json().catch(() => ({}));
           return { ok: false, error: error?.error || "Décision impossible côté serveur." };
         }
-        return store.decideApplication(managerCompteId, applicationId, decision, commentaire);
-      },
-      login: (email, password, routeRole) => {
-        const r = store.login(email, password, routeRole);
-        if (r.ok) setSession(r.session);
-        return r;
+        const synchronized = await synchronizeBusinessState();
+        return synchronized.ok ? { ok: true } : synchronized;
       },
       establishSession: (accountId, routeRole) => {
         const result = store.establishSession(accountId, routeRole);
         if (result.ok) setSession(result.session);
         return result;
       },
-      loginDemo: (routeRole) => {
-        const r = store.loginDemo(routeRole);
-        if (r.ok) setSession(r.session);
-        return r;
+      refreshDataFromServer: async () => {
+        return synchronizeBusinessState();
       },
       logout: () => {
         const role = store.getSession()?.role;
@@ -183,7 +232,7 @@ export function RelayFlowProvider({ children }) {
         store.logout();
         setSession(null);
       },
-    }),
+    });},
     []
   );
 

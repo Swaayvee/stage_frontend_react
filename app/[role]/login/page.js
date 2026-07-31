@@ -104,23 +104,7 @@ export default function LoginPage({ params }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, routeRole: actualRole }),
     }).catch(() => null);
-    let serverResponse = await loginOnServer();
-    if (!serverResponse?.ok) {
-      const legacyResult = api.login(email, password, actualRole);
-      if (legacyResult.ok && ["vendeur", "livreur"].includes(legacyResult.session.role)) {
-        const syncResponse = await fetch("/api/auth/dev-sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            accountId: legacyResult.session.compteId,
-            email,
-            password,
-            role: legacyResult.session.role,
-          }),
-        }).catch(() => null);
-        if (syncResponse?.ok) serverResponse = await loginOnServer();
-      }
-    }
+    const serverResponse = await loginOnServer();
     const serverResult = serverResponse ? await serverResponse.json().catch(() => ({})) : {};
     if (!serverResponse?.ok) {
       api.logout();
@@ -129,10 +113,27 @@ export default function LoginPage({ params }) {
       return;
     }
     const localSession = api.establishSession(serverResult.accountId, actualRole);
-    if (!localSession.ok) {
+    let activeSession = localSession;
+    if (!activeSession.ok && serverResult.email) {
+      const hydrated = api.hydrateAuthenticatedAccount({
+        _id: serverResult.accountId,
+        email: serverResult.email,
+        role: serverResult.role,
+        profile: serverResult.profile,
+      });
+      if (hydrated.ok) activeSession = api.establishSession(serverResult.accountId, actualRole);
+    }
+    if (!activeSession.ok) {
       api.logout();
       setLoading(false);
-      setError(localSession.error);
+      setError(activeSession.error);
+      return;
+    }
+    const synchronized = await api.refreshDataFromServer();
+    if (!synchronized.ok) {
+      api.logout();
+      setLoading(false);
+      setError(synchronized.error || "Connexion à MongoDB indisponible.");
       return;
     }
     setLoading(false);
@@ -244,12 +245,4 @@ export default function LoginPage({ params }) {
       </section>
     </main>
   );
-}
-
-function getNameFromEmail(email, fallback) {
-  const localPart = email.split("@")[0];
-  return localPart
-    .split(/[._-]/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ") || fallback;
 }

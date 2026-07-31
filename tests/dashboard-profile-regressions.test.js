@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { buildViewModel } from "../lib/viewModel";
 import {
+  displayNameForCompte,
   getState,
+  hydrateAuthenticatedAccount,
   resetDemoData,
   updateLivreurPreferences,
 } from "../lib/store";
@@ -43,5 +45,24 @@ describe("tableaux de bord et préférences persistantes", () => {
       const account = state.comptes.find((item) => item._id === application.compteId);
       expect(account?.motDePasseHash?.length).toBeGreaterThanOrEqual(10);
     });
+  });
+
+  it("affiche le vrai nom du manager", () => {
+    expect(displayNameForCompte("cmp_gest1")).toBe("Sarah Bernard");
+  });
+
+  it("peut hydrater une session Super Manager après un changement de rôle", () => {
+    const state = getState();
+    state.comptes = state.comptes.filter((account) => account._id !== "cmp_super1");
+
+    const result = hydrateAuthenticatedAccount({
+      _id: "cmp_super1",
+      email: "admin@relayflow.fr",
+      role: "super_manager",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(getState().comptes.find((account) => account._id === "cmp_super1")?.role)
+      .toBe("super_manager");
   });
 });

@@ -6,8 +6,39 @@ import {
   decidePendingAccount,
   registerPendingAccount,
 } from "../../../lib/server/registrationRegistry";
+import { applyBusinessRegistrationDecision, upsertBusinessRegistration } from "../../../lib/server/database";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function sanitizeProfile(profile, role) {
+  if (!profile || typeof profile !== "object") return null;
+  const common = {
+    nom: String(profile.nom || "").slice(0, 120),
+    telephone: String(profile.telephone || "").slice(0, 30),
+    adresse: String(profile.adresse || "").slice(0, 220),
+    ville: String(profile.ville || "").slice(0, 100),
+    departement: String(profile.departement || "").slice(0, 100),
+    codePostal: String(profile.codePostal || "").slice(0, 12),
+    codeCommune: String(profile.codeCommune || "").slice(0, 20),
+    codeDepartement: String(profile.codeDepartement || "").slice(0, 8),
+    profil: Object.fromEntries(
+      Object.entries(profile.profil && typeof profile.profil === "object" ? profile.profil : {})
+        .slice(0, 40)
+        .map(([key, value]) => [String(key).slice(0, 100), String(value).slice(0, 500)])
+    ),
+    documents: Array.isArray(profile.documents)
+      ? profile.documents.slice(0, 10).map((document) => ({
+          nom: String(document?.nom || "document").slice(0, 180),
+          type: String(document?.type || "application/octet-stream").slice(0, 100),
+          taille: Math.max(0, Math.min(Number(document?.taille || 0), 10_000_000)),
+          url: String(document?.url || "").slice(0, 500),
+        }))
+      : [],
+  };
+  return role === "vendeur"
+    ? { ...common, raisonSociale: String(profile.raisonSociale || "").slice(0, 160), typeCommerce: String(profile.typeCommerce || "").slice(0, 80) }
+    : { ...common, typeVehicule: String(profile.typeVehicule || "").slice(0, 80) };
+}
 
 export async function POST(request) {
   const body = await request.json().catch(() => null);
@@ -32,6 +63,12 @@ export async function POST(request) {
       assignedManagerAccountIds: Array.isArray(body.assignedManagerAccountIds)
         ? body.assignedManagerAccountIds.map(String)
         : [],
+      profile: sanitizeProfile(body.profile, role),
+    });
+    await upsertBusinessRegistration({
+      accountId: String(body.accountId), applicationId: String(body.applicationId),
+      email: String(body.email), role, profile: sanitizeProfile(body.profile, role),
+      managerIds: Array.isArray(body.managerIds) ? body.managerIds.map(String) : [],
     });
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
@@ -49,6 +86,9 @@ export async function PATCH(request) {
     return NextResponse.json({ error: "Décision invalide." }, { status: 400 });
   try {
     await decidePendingAccount(String(body.applicationId || ""), actor.sub, body.decision);
+    await applyBusinessRegistrationDecision(
+      String(body.applicationId || ""), body.decision, actor.sub, String(body.commentaire || "")
+    );
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 409 });

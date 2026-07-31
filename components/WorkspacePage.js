@@ -97,6 +97,12 @@ export function DeliveryModal({ delivery, role, assignMode: initialAssignMode, o
     }));
   const isCourierDelivering =
     role === "courier" && (rawStatut === "ACCEPTEE" || rawStatut === "RETIREE");
+  const assignedCourier = state?.livreurs?.find((item) => item._id === livraisonRecord?.livreurId);
+  const sellerRecord = state?.vendeurs?.find((item) => item._id === livraisonRecord?.vendeurId);
+  const livePositionIsFresh = Date.now() - new Date(assignedCourier?.positionActualiseeLe || 0).getTime() < 5 * 60 * 1000;
+  const liveLocationAvailable = Boolean(
+    assignedCourier?.partagePositionActif && assignedCourier?.coordonnees && livePositionIsFresh && isCourierDelivering
+  );
 
   const getWorkflowAction = () => {
     if (role === "courier" && livraisonRecord && session) {
@@ -271,17 +277,23 @@ export function DeliveryModal({ delivery, role, assignMode: initialAssignMode, o
             {/* Section spéciale livreur : Carte & Navigation */}
             {role === "courier" && (
               <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <p className="m-0 text-xs font-bold uppercase tracking-wider text-indigo-300">Itinéraire GPS & Navigation</p>
-                  <span className="text-[0.68rem] text-slate-400 font-medium">Calcul des temps en temps réel sur la carte</span>
+                  <span className="text-right text-[0.68rem] text-slate-400 font-medium">
+                    {liveLocationAvailable ? "Estimation depuis votre position partagée" : "Aucun temps calculé sans position partagée"}
+                  </span>
                 </div>
 
                 {/* Carte interactive OSRM */}
                 <div className="h-[280px] w-full relative rounded-lg overflow-hidden border border-white/5 shadow-inner">
                   <DeliveryMap
                     courierMode="Vélo électrique"
+                    courierCoords={liveLocationAvailable ? assignedCourier.coordonnees : null}
+                    merchantCoords={sellerRecord?.coordonnees}
+                    clientCoords={livraisonRecord?.coordonneesLivraison}
                     merchantName={merchant}
                     clientAddress={address || destination}
+                    target={rawStatut === "RETIREE" ? "client" : "merchant"}
                   />
                 </div>
 
@@ -2371,11 +2383,13 @@ function CourierStatus() {
     if (!courier) return;
     setOnline(courier.statutOperationnel === "disponible");
     setRadius(String(courier.rayonRechercheKm || 5));
-    if (courier.coordonnees) {
+    if (courier.partagePositionActif && courier.coordonnees) {
       setCoords(courier.coordonnees);
       setLocation(true);
+    } else {
+      setLocation(false);
     }
-  }, [courier?.statutOperationnel, courier?.rayonRechercheKm, courier?.coordonnees]);
+  }, [courier?.statutOperationnel, courier?.rayonRechercheKm, courier?.coordonnees, courier?.partagePositionActif]);
 
   const handleOnlineToggle = () => {
     const next = !online;
@@ -2465,16 +2479,16 @@ function CourierStatus() {
           <div>
             <b className="text-sm text-white block">Partager ma position en direct (GPS)</b>
             <p className="text-xs text-slate-400">
-              {coords
+              {location && coords
                 ? `📍 Position GPS : ${coords.lat.toFixed(4)}° N, ${coords.lng.toFixed(4)}° E`
-                : "Permet de recommander les livraisons proches et d'optimiser votre tournée."}
+                : "Sans partage, les autres acteurs voient uniquement les étapes et l'horaire prévu."}
             </p>
           </div>
           <button
             className={`small ${location ? "good" : ""}`}
-            onClick={requestLocation}
+            onClick={location ? stopLocation : requestLocation}
           >
-            {location ? "✓ Position GPS partagée" : "Autoriser la géolocalisation"}
+            {location ? "Arrêter le partage" : "Autoriser et partager ma position"}
           </button>
         </div>
         {locationError && <p className="text-xs text-amber-300 font-medium m-0">{locationError}</p>}
@@ -2514,6 +2528,14 @@ function IssueMessagesInbox() {
     }
     setReply("");
     setFeedback("Réponse envoyée au manager.");
+  };
+
+  const stopLocation = () => {
+    const result = api.stopLivreurLocationSharing(session?.compteId);
+    if (result.ok) {
+      setLocation(false);
+      setLocationError("Le partage est arrêté. Aucun temps d’arrivée en direct ne sera affiché.");
+    } else setLocationError(result.error);
   };
 
   if (!threads.length) {

@@ -131,7 +131,7 @@ export default function Dashboard({ role }) {
         sub: "Gérez les comptes et supervisez les signalements de votre juridiction.",
         primary: ["Créer un utilisateur", "/manager/invite"],
         stats: [
-          [String(viewModel.applicationsData.length), "Comptes zone", "amber", "/manager/applications"],
+          [String(viewModel.directoryData.merchants.length + viewModel.directoryData.couriers.length), "Comptes zone", "amber", "/manager/merchants"],
           [String(d.issuesOuverts), "Problèmes ouverts", "red", "/manager/issues"],
           [String(viewModel.directoryData.merchants.length), "Commerçants", "emerald", "/manager/merchants"],
           [String(viewModel.directoryData.couriers.length), "Livreurs", "indigo", "/manager/couriers"],

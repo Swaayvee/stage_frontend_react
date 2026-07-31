@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRelayFlow } from "../../../context/RelayFlowProvider";
 import { inJurisdiction, STATUT_LIVRAISON_LABEL } from "../../../lib/domain";
 
@@ -17,8 +17,16 @@ export default function Tracking({ params }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [ratingFeedback, setRatingFeedback] = useState("");
+  const [remoteTracking, setRemoteTracking] = useState(null);
 
-  const livraison = useMemo(() => {
+  useEffect(() => {
+    fetch(`/api/tracking/${encodeURIComponent(reference)}`, { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then(setRemoteTracking)
+      .catch(() => setRemoteTracking(null));
+  }, [reference]);
+
+  const localLivraison = useMemo(() => {
     return state?.livraisons?.find((delivery) => {
       const publicMatch =
         delivery.suiviPublic === true &&
@@ -35,6 +43,7 @@ export default function Tracking({ params }) {
       return publicMatch || internalMatch;
     });
   }, [state, reference, session]);
+  const livraison = remoteTracking?.livraison || localLivraison;
 
   if (!livraison) {
     return (
@@ -61,10 +70,17 @@ export default function Tracking({ params }) {
     );
   }
 
-  const livreur = state?.livreurs?.find((l) => l._id === livraison.livreurId);
-  const vendeur = state?.vendeurs?.find((v) => v._id === livraison.vendeurId);
+  const livreur = remoteTracking?.livreur || state?.livreurs?.find((l) => l._id === livraison.livreurId);
+  const vendeur = remoteTracking?.vendeur || state?.vendeurs?.find((v) => v._id === livraison.vendeurId);
   const current = stepIndex(livraison.statut);
   const label = STATUT_LIVRAISON_LABEL[livraison.statut] || livraison.statut;
+  const liveTracking = Boolean(
+    (livreur?.liveTracking || (livreur?.partagePositionActif && livreur?.coordonnees &&
+    Date.now() - new Date(livreur?.positionActualiseeLe || 0).getTime() < 5 * 60 * 1000)) &&
+    ["ACCEPTEE", "RETIREE"].includes(livraison.statut)
+  );
+  const latestEvent = [...(livraison.historique || [])]
+    .sort((a, b) => new Date(b.quand || 0) - new Date(a.quand || 0))[0];
 
   return (
     <main className="tracking">
@@ -94,12 +110,16 @@ export default function Tracking({ params }) {
           <p><strong>Commerçant :</strong> {vendeur?.raisonSociale || "—"}</p>
           {livraison.descriptionContenu && <p><strong>Contenu :</strong> {livraison.descriptionContenu}</p>}
         </div>
-        {livreur?.coordonnees && (
-          <div className="map mt-4">
-            <span>Position du livreur (approximative)</span>
-            <small>Lat {livreur.coordonnees.lat?.toFixed(4)}, Lng {livreur.coordonnees.lng?.toFixed(4)}</small>
-          </div>
-        )}
+        <section className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-sm">
+          <p className="m-0 font-bold text-white">Informations disponibles</p>
+          {liveTracking ? (
+            <p className="mt-2 text-emerald-300">Suivi en direct actif. La position sert au calcul d’arrivée, sans afficher les coordonnées GPS brutes au client.</p>
+          ) : (
+            <p className="mt-2 text-slate-300">Position non partagée : aucun temps d’arrivée en direct ne peut être calculé. Le suivi repose sur les étapes confirmées.</p>
+          )}
+          {latestEvent?.quand && <p className="mt-2 text-slate-400">Dernière étape confirmée : {new Date(latestEvent.quand).toLocaleString("fr-FR")}</p>}
+          {livraison.dateReceptionPrevue && <p className="mt-2 text-slate-400">Date prévue : {new Date(livraison.dateReceptionPrevue).toLocaleString("fr-FR")}</p>}
+        </section>
         {livraison.statut === "LIVREE" && livreur && (
           <section className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
             <h2 className="m-0 text-base font-black text-white">Noter la livraison</h2>
@@ -134,15 +154,13 @@ export default function Tracking({ params }) {
               type="button"
               className="button mt-3"
               disabled={!rating || comment.trim().length < 3}
-              onClick={() => {
-                const result = api.submitEvaluation({
-                  livraisonId: livraison._id,
-                  numeroSuivi: livraison.numeroSuivi,
-                  auteurType: "client",
-                  note: rating,
-                  commentaire: comment,
-                });
-                setRatingFeedback(result.ok ? "Merci, votre avis a été enregistré." : result.error);
+              onClick={async () => {
+                const response = await fetch(`/api/tracking/${encodeURIComponent(reference)}`, {
+                  method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ note: rating, commentaire: comment }),
+                }).catch(() => null);
+                const result = await response?.json().catch(() => ({}));
+                setRatingFeedback(response?.ok ? "Merci, votre avis a été enregistré." : result?.error || "Avis non enregistré.");
               }}
             >
               Envoyer l’avis

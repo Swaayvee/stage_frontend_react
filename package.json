@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "db:status": "node --env-file=.env.local scripts/mongodb-status.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
+    "mongodb": "^7.5.0",
     "next": "^16.1.6",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "mongodb-memory-server": "^11.2.0",
     "vitest": "^4.1.10"
   }
 }
