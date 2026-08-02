@@ -124,7 +124,11 @@ export function RelayFlowProvider({ children }) {
       return ({
       ...centralizedActions,
       submitApplication: async (payload) => {
-        const result = store.submitApplication(payload);
+        const localPayload = {
+          ...payload,
+          documents: (payload.documents || []).map(({ dataBase64, ...metadata }) => metadata),
+        };
+        const result = store.submitApplication(localPayload);
         if (!result.ok) return result;
         const currentState = store.getState();
         const assignedManagerAccountIds = result.application.managerIds
@@ -155,10 +159,12 @@ export function RelayFlowProvider({ children }) {
         return result;
       },
       createUserByManager: async (managerCompteId, payload) => {
-        const result = store.submitApplication({
+        const localPayload = {
           ...payload,
+          documents: (payload.documents || []).map(({ dataBase64, ...metadata }) => metadata),
           createdByManagerCompteId: managerCompteId,
-        });
+        };
+        const result = store.submitApplication(localPayload);
         if (!result.ok) return result;
         const currentState = store.getState();
         const assignedManagerAccountIds = result.application.managerIds

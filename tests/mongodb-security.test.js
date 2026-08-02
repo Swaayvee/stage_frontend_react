@@ -90,4 +90,39 @@ describe("MongoDB centralisé", () => {
     expect(authenticated).not.toHaveProperty("passwordHash");
     expect(authenticated).not.toHaveProperty("passwordSalt");
   });
+
+  it("stocke les justificatifs hors de l’état métier et limite leur lecture aux managers autorisés", async () => {
+    const file = Buffer.from("%PDF-1.4\n%%EOF");
+    const [metadata] = await database.storeApplicationDocuments("app_demo_vendeur", [{
+      nom: "kbis-test.pdf",
+      type: "application/pdf",
+      taille: file.length,
+      dataBase64: file.toString("base64"),
+    }]);
+
+    expect(metadata.url).toContain("/api/registration-applications/app_demo_vendeur/documents/");
+    const managerDocument = await database.getApplicationDocument(
+      "app_demo_vendeur",
+      metadata._id,
+      { sub: "cmp_gest1", role: "manager" }
+    );
+    expect(Buffer.from(managerDocument.data.buffer)).toEqual(file);
+    expect(await database.getApplicationDocument(
+      "app_demo_vendeur",
+      metadata._id,
+      { sub: "cmp_livreur1", role: "livreur" }
+    )).toBeNull();
+    expect((await database.loadBusinessState())).not.toHaveProperty("applicationDocuments");
+    await database.removeApplicationDocuments("app_demo_vendeur");
+  });
+
+  it("refuse un fichier dont le contenu ne correspond pas à un format autorisé", async () => {
+    const file = Buffer.from("faux document exécutable");
+    await expect(database.storeApplicationDocuments("app_demo_vendeur", [{
+      nom: "faux.pdf",
+      type: "application/pdf",
+      taille: file.length,
+      dataBase64: file.toString("base64"),
+    }])).rejects.toThrow(/PDF, PNG, JPEG et WebP/);
+  });
 });

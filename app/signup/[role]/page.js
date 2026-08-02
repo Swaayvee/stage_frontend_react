@@ -77,6 +77,14 @@ function MerchantForm({ merchantType, setMerchantType }) {
         </div>
       </fieldset>
 
+      <fieldset className="signup-fieldset">
+        <legend className="signup-legend">Secteur d’activité</legend>
+        <label className="signup-label col-span-full">
+          <span>Activité principale <span className="text-red-400">*</span></span>
+          <input name="secteurActivite" required placeholder="Ex. Épicerie fine, Mode, Fleuriste…" />
+        </label>
+      </fieldset>
+
       {merchantType === "physical" && (
         <>
           <fieldset className="signup-fieldset">
@@ -94,10 +102,6 @@ function MerchantForm({ merchantType, setMerchantType }) {
                 <span>Nom du gérant / responsable <span className="text-red-400">*</span></span>
                 <input required placeholder="Prénom Nom" />
               </label>
-              <label className="signup-label">
-                <span>Secteur d'activité <span className="text-red-400">*</span></span>
-                <input required placeholder="Ex. Épicerie fine, Mode, Fleuriste…" />
-              </label>
             </div>
           </fieldset>
 
@@ -109,6 +113,8 @@ function MerchantForm({ merchantType, setMerchantType }) {
                 cityName="villePointVente"
                 departmentName="departementPointVente"
                 postalCodeName="codePostalPointVente"
+                cityCodeName="codeCommunePointVente"
+                departmentCodeName="codeDepartementPointVente"
                 addressLabel="Adresse exacte du magasin"
               />
               <label className="signup-label">
@@ -179,6 +185,8 @@ function MerchantForm({ merchantType, setMerchantType }) {
                 cityName="villeEntrepot"
                 departmentName="departementEntrepot"
                 postalCodeName="codePostalEntrepot"
+                cityCodeName="codeCommuneEntrepot"
+                departmentCodeName="codeDepartementEntrepot"
                 addressLabel="Adresse de l'entrepôt ou atelier"
               />
               <label className="signup-label">
@@ -268,6 +276,9 @@ function MerchantForm({ merchantType, setMerchantType }) {
                 cityName="villeRattachement"
                 departmentName="departementRattachement"
                 postalCodeName="codePostalRattachement"
+                cityCodeName="codeCommuneRattachement"
+                departmentCodeName="codeDepartementRattachement"
+                cityLabel="Ville principale d’activité"
               />
             </div>
           </fieldset>
@@ -300,10 +311,15 @@ function CourierForm() {
       <fieldset className="signup-fieldset">
         <legend className="signup-legend">Zone d'activité</legend>
         <div className="signup-grid">
-          <label className="signup-label">
-            <span>Zone de livraison <span className="text-red-400">*</span></span>
-            <input required placeholder="Ex. Lyon 3e et 7e" />
-          </label>
+          <FrenchLocationFields
+            showAddress={false}
+            cityName="zoneVille"
+            departmentName="zoneDepartement"
+            postalCodeName="zoneCodePostal"
+            cityCodeName="zoneCodeCommune"
+            departmentCodeName="zoneCodeDepartement"
+            cityLabel="Zone de livraison principale"
+          />
         </div>
       </fieldset>
 
@@ -378,6 +394,22 @@ function SignupContent({ role, spec }) {
     }
   };
 
+  const readDocument = (file) => new Promise((resolve, reject) => {
+    if (file.size > 10_000_000) {
+      reject(new Error(`${file.name} dépasse la limite de 10 Mo.`));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(`Impossible de lire ${file.name}.`));
+    reader.onload = () => resolve({
+      nom: file.name,
+      type: file.type,
+      taille: file.size,
+      dataBase64: String(reader.result || "").split(",")[1] || "",
+    });
+    reader.readAsDataURL(file);
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
@@ -393,21 +425,48 @@ function SignupContent({ role, spec }) {
       const key = field.name || label || `champ_${index + 1}`;
       if (field.value) profil[key] = field.value;
     });
-    const documents = [...e.currentTarget.querySelectorAll('input[type="file"]')]
-      .flatMap((field) => [...(field.files || [])])
-      .map((file) => ({ nom: file.name, type: file.type, taille: file.size }));
+    let documents;
+    try {
+      documents = await Promise.all(
+        [...e.currentTarget.querySelectorAll('input[type="file"]')]
+          .flatMap((field) => [...(field.files || [])])
+          .map(readDocument)
+      );
+    } catch (error) {
+      setSubmitError(error.message);
+      return;
+    }
+    const merchantLocationFields = {
+      physical: {
+        address: "adressePointVente", city: "villePointVente", department: "departementPointVente",
+        postalCode: "codePostalPointVente", cityCode: "codeCommunePointVente", departmentCode: "codeDepartementPointVente",
+      },
+      ecommerce: {
+        address: "adresseEntrepot", city: "villeEntrepot", department: "departementEntrepot",
+        postalCode: "codePostalEntrepot", cityCode: "codeCommuneEntrepot", departmentCode: "codeDepartementEntrepot",
+      },
+      mobile: {
+        address: "adresse", city: "villeRattachement", department: "departementRattachement",
+        postalCode: "codePostalRattachement", cityCode: "codeCommuneRattachement", departmentCode: "codeDepartementRattachement",
+      },
+    };
+    const locationFields = role === "merchant" ? merchantLocationFields[merchantType] : {
+      address: "adresse", city: "zoneVille", department: "zoneDepartement",
+      postalCode: "zoneCodePostal", cityCode: "zoneCodeCommune", departmentCode: "zoneCodeDepartement",
+    };
     const result = await api.submitApplication({
       role: role === "merchant" ? "vendeur" : "livreur",
       email: data.get("email"),
       telephone: data.get("telephone"),
-      ville: data.get("ville"),
-      departement: data.get("departement"),
-      codeCommune: data.get("codeCommune"),
-      codeDepartement: data.get("codeDepartement"),
-      codePostal: data.get("codePostal"),
+      ville: data.get(locationFields.city),
+      departement: data.get(locationFields.department),
+      codeCommune: data.get(locationFields.cityCode),
+      codeDepartement: data.get(locationFields.departmentCode),
+      codePostal: data.get(locationFields.postalCode),
       nom: data.get("displayName"),
       raisonSociale: role === "merchant" ? data.get("displayName") : "",
-      adresse: data.get("adresse"),
+      adresse: data.get(locationFields.address),
+      typeCommerce: role === "merchant" ? merchantType : "",
       typeVehicule: data.get("typeVehicule"),
       password: data.get("password"),
       profil,
@@ -512,7 +571,7 @@ function SignupContent({ role, spec }) {
               <span>
                 {role === "merchant" ? merchantFileLabel : spec.fileLabel} <span className="text-red-400">*</span>
               </span>
-              <input type="file" accept=".pdf,image/*" required />
+              <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" required />
             </label>
           </fieldset>
 

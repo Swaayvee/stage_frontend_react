@@ -2438,6 +2438,17 @@ function CourierStatus() {
     );
   };
 
+  const stopLocation = () => {
+    const result = api.stopLivreurLocationSharing(session?.compteId);
+    if (result.ok) {
+      setCoords(null);
+      setLocation(false);
+      setLocationError("Le partage est arrêté. Aucun temps d’arrivée en direct ne sera affiché.");
+    } else {
+      setLocationError(result.error || "Le partage de position n’a pas pu être arrêté.");
+    }
+  };
+
   return (
     <section className="status-panel panel">
       <div className="status-hero">
@@ -2528,14 +2539,6 @@ function IssueMessagesInbox() {
     }
     setReply("");
     setFeedback("Réponse envoyée au manager.");
-  };
-
-  const stopLocation = () => {
-    const result = api.stopLivreurLocationSharing(session?.compteId);
-    if (result.ok) {
-      setLocation(false);
-      setLocationError("Le partage est arrêté. Aucun temps d’arrivée en direct ne sera affiché.");
-    } else setLocationError(result.error);
   };
 
   if (!threads.length) {

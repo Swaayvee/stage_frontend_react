@@ -6,7 +6,12 @@ import {
   decidePendingAccount,
   registerPendingAccount,
 } from "../../../lib/server/registrationRegistry";
-import { applyBusinessRegistrationDecision, upsertBusinessRegistration } from "../../../lib/server/database";
+import {
+  applyBusinessRegistrationDecision,
+  removeApplicationDocuments,
+  storeApplicationDocuments,
+  upsertBusinessRegistration,
+} from "../../../lib/server/database";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -54,22 +59,31 @@ export async function POST(request) {
     return NextResponse.json({ error: "Données d'inscription invalides." }, { status: 400 });
   }
   try {
-    await registerPendingAccount({
-      applicationId: String(body.applicationId),
-      accountId: String(body.accountId),
-      email: String(body.email).slice(0, 254),
-      password: String(body.password).slice(0, 128),
-      role,
-      assignedManagerAccountIds: Array.isArray(body.assignedManagerAccountIds)
-        ? body.assignedManagerAccountIds.map(String)
-        : [],
-      profile: sanitizeProfile(body.profile, role),
-    });
-    await upsertBusinessRegistration({
-      accountId: String(body.accountId), applicationId: String(body.applicationId),
-      email: String(body.email), role, profile: sanitizeProfile(body.profile, role),
-      managerIds: Array.isArray(body.managerIds) ? body.managerIds.map(String) : [],
-    });
+    const applicationId = String(body.applicationId);
+    const sanitizedProfile = sanitizeProfile(body.profile, role);
+    const documents = await storeApplicationDocuments(applicationId, body.profile?.documents || []);
+    const storedProfile = { ...sanitizedProfile, documents };
+    try {
+      await registerPendingAccount({
+        applicationId,
+        accountId: String(body.accountId),
+        email: String(body.email).slice(0, 254),
+        password: String(body.password).slice(0, 128),
+        role,
+        assignedManagerAccountIds: Array.isArray(body.assignedManagerAccountIds)
+          ? body.assignedManagerAccountIds.map(String)
+          : [],
+        profile: storedProfile,
+      });
+      await upsertBusinessRegistration({
+        accountId: String(body.accountId), applicationId,
+        email: String(body.email), role, profile: storedProfile,
+        managerIds: Array.isArray(body.managerIds) ? body.managerIds.map(String) : [],
+      });
+    } catch (error) {
+      await removeApplicationDocuments(applicationId);
+      throw error;
+    }
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 409 });
